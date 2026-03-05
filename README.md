@@ -1,6 +1,6 @@
 # Text-to-SQL using SFT + RLHF (Spider Benchmark)
 
-## 📌 Project Overview
+##  Project Overview
 This project implements a **cross-domain Text-to-SQL system** trained on the **Spider benchmark dataset**.
 
 The system converts **natural language questions into executable SQL queries** across multiple relational databases.
@@ -17,7 +17,7 @@ Multiple transformer architectures were evaluated to understand how **different 
 
 ---
 
-## 🌐 Live Demo
+##  Live Demo
 
 Try the interactive Text-to-SQL system here:
 
@@ -34,7 +34,7 @@ The demo allows users to:
 
 ---
 
-## 📄 Project Report
+##  Project Report
 
 Full project report with architecture explanation, experiments, and evaluation results:
 
@@ -52,7 +52,7 @@ The report includes:
 
 ---
 
-## 🚀 Features
+##  Features
 
 - **Multi-Model Experimentation**  
   Experiments with **T5-Small, BART-Base, and CodeT5-Base**
@@ -71,7 +71,7 @@ The report includes:
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 text2sql_project
@@ -97,7 +97,7 @@ text2sql_project
 
 ---
 
-## 🧠 Models Evaluated
+##  Models Evaluated
 
 | Model | Pretraining Type | Parameters |
 |------|------------------|-----------|
@@ -110,7 +110,7 @@ text2sql_project
 
 ---
 
-## 📊 Results (Execution Accuracy)
+##  Results (Execution Accuracy)
 
 | Model | SFT Accuracy | RLHF Accuracy |
 |------|--------------|---------------|
@@ -122,7 +122,7 @@ Although RLHF slightly reduced execution accuracy in some cases, it improved **s
 
 ---
 
-## 🧪 Training Pipeline
+##  Training Pipeline
 
 ### Stage 1 — Supervised Fine-Tuning (SFT)
 
@@ -159,7 +159,7 @@ python src/train_rl_bart.py
 
 ---
 
-## 📈 Evaluation
+##  Evaluation
 
 Evaluate execution accuracy using:
 
@@ -178,7 +178,7 @@ python src/eval_rl_fixed.py \
 
 ---
 
-## 📊 Visualization
+##  Visualization
 
 Generate training curves and comparisons:
 
@@ -196,7 +196,7 @@ Generated plots include:
 
 
 
-## 📌 Example Query
+##  Example Query
 
 Example question you can try:
 
@@ -208,7 +208,7 @@ The system will generate the SQL query and execute it on the database.
 
 ---
 
-## 💡 Future Improvements
+##  Future Improvements
 
 - Train larger models (**T5-Large, CodeT5+**)
 - Improve reward shaping strategies for RLHF
@@ -218,7 +218,7 @@ The system will generate the SQL query and execute it on the database.
 
 ---
 
-## ✨ Author
+##  Author
 
 **Tanisha Jhalani**   
 Machine Learning & Systems Project
