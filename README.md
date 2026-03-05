@@ -74,27 +74,41 @@ The report includes:
 ##  Project Structure
 
 ```
-text2sql_project
+Text2SQL_Project
 │
-├── src/                     # Training, evaluation, inference scripts
+├── src/                      # Core training, evaluation and inference utilities
 │
-├── data/                    # Spider dataset and SQLite databases
+├── data/                     # Spider dataset and SQLite databases
 │
-├── outputs/                 # RL outputs and logs
+├── outputs/                  # RLHF outputs, logs and training checkpoints
 │
-├── comparison_plots/        # Training curve visualization
+├── comparison_plots/         # Training curve visualizations and performance graphs
 │
-├── docs/                    # HTML report and figures
+├── docs/                     # HTML report, figures and project documentation
 │
-├── spider_eval/             # Official Spider evaluation scripts
+├── spider_eval/              # Official Spider evaluation scripts
 │
-├── app.py                   # Gradio interactive demo
+├── experiments/              # Best model checkpoints and experiment configurations
 │
-├── requirements.txt         # Project dependencies
-|
-├── Experiments              # best model checkpoints
+├── app.py                    # Gradio interactive demo (Natural Language → SQL)
 │
-└── README.md                # Project documentation
+├── inference.py              # Runs trained model to generate SQL queries
+│
+├── run_text2sql.py           # Main pipeline for converting text queries to SQL
+│
+├── run_sql.py                # Executes generated SQL queries on SQLite databases
+│
+├── schema_utils.py           # Utilities for reading and encoding database schema
+│
+├── sql_cleaner.py            # SQL post-processing and normalization utilities
+│
+├── requirements.txt          # Python dependencies required to run the project
+│
+├── .gitignore                # Files and folders ignored by Git
+│
+├── .nojekyll                 # Enables GitHub Pages for docs without Jekyll processing
+│
+└── README.md                 # Complete project documentation
 ```
 
 ---
