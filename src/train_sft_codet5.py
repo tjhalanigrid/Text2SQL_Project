@@ -116,7 +116,7 @@ base_model = AutoModelForSeq2SeqLM.from_pretrained(BASE_MODEL)
 base_model.config.use_cache = False
 base_model.gradient_checkpointing_enable()
 
-# 🔥 DIFFERENT FROM T5
+#  DIFFERENT FROM T5
 lora_config = LoraConfig(
     r=16,
     lora_alpha=32,

@@ -44,18 +44,18 @@ ROLLOUTS_PER_EPOCH = 2048
 # ======================================================
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# 🎯 FIXED: Save ONLY the best model to this exact path
+#  FIXED: Save ONLY the best model to this exact path
 RL_MODEL_PATH = os.path.join(PROJECT_ROOT, "checkpoints", "rlhf_t5_best")
 output_dir = RL_MODEL_PATH
 
 DB_ROOT = os.path.join(PROJECT_ROOT, "data/database")
 
-# 🎯 Updated to point to our newly trained t5-small SFT model
+#  Updated to point to our newly trained t5-small SFT model
 ADAPTER_PATH = os.path.join(PROJECT_ROOT, "checkpoints/sft_t5") 
 
 FALLBACK_ADAPTER_PATH = os.path.join(PROJECT_ROOT, "models/t5_spider_sft_lora")
 FALLBACK_ADAPTER_PATH_2 = os.path.join(PROJECT_ROOT, "outputs/sft_text2sql")
-# 🎯 ENSURING t5-small is used
+#  ENSURING t5-small is used
 BASE_MODEL = os.environ.get("BASE_MODEL", "t5-small")
 
 

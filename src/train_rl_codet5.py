@@ -32,7 +32,7 @@ LOG_EVERY = 20
 USE_SCHEMA = True
 SCHEMA_WARMUP_EPOCHS = 2   
 MAX_SCHEMA_CHARS = 1500
-MAX_OUTPUT_TOKENS = 64     # 🚀 Speed up: Reduced max tokens
+MAX_OUTPUT_TOKENS = 64     #  Speed up: Reduced max tokens
 ROLLOUTS_PER_EPOCH = 1024  
 
 # ======================================================
@@ -56,9 +56,9 @@ BASE_MODEL = os.environ.get("BASE_MODEL", "Salesforce/codet5-base")
 # LOAD MODEL (LoRA)
 # ======================================================
 def find_valid_adapter(path_candidates):
-    # 🚀 SAFETY & RESUME: Check for existing milestone first
+    #  SAFETY & RESUME: Check for existing milestone first
     if os.path.exists(os.path.join(RESUME_CHECKPOINT, "adapter_config.json")):
-        print(f"\n✅ Resuming RL training from checkpoint: {RESUME_CHECKPOINT}\n")
+        print(f"\n Resuming RL training from checkpoint: {RESUME_CHECKPOINT}\n")
         return RESUME_CHECKPOINT
         
     for p in path_candidates:
@@ -75,7 +75,7 @@ ADAPTER_PATH = find_valid_adapter([
 ])
 
 if ADAPTER_PATH is None:
-    raise RuntimeError("❌ No valid LoRA adapter found!")
+    raise RuntimeError(" No valid LoRA adapter found!")
 
 print("Loading adapter:", ADAPTER_PATH)
 
@@ -94,7 +94,7 @@ model = AutoModelForSeq2SeqLMWithValueHead.from_pretrained(
     torch_dtype=torch.float32
 ).to(device)
 
-# 🚀 RESUME: Load adapter dynamically and ensure it's trainable
+#  RESUME: Load adapter dynamically and ensure it's trainable
 model.pretrained_model = PeftModel.from_pretrained(
     model.pretrained_model,
     ADAPTER_PATH,
@@ -174,7 +174,7 @@ def sample_example():
 def get_db_path(db_id):
     return os.path.join(DB_ROOT, db_id, f"{db_id}.sqlite")
 
-# 🚀 SPEED OPTIMIZATION: Cache schema so we don't spam disk IO
+# SPEED OPTIMIZATION: Cache schema so we don't spam disk IO
 _SCHEMA_CACHE = {}
 
 def get_db_schema_cached(db_path):
@@ -251,7 +251,7 @@ except Exception:
 # ======================================================
 # GENERATION CONFIG
 # ======================================================
-# 🚀 SPEED OPTIMIZATION: generation limits and randomness bypass
+#  SPEED OPTIMIZATION: generation limits and randomness bypass
 generation_kwargs = dict(
     max_new_tokens=MAX_OUTPUT_TOKENS,
     do_sample=True,          # TRL Requires do_sample=True
@@ -265,7 +265,7 @@ generation_kwargs = dict(
 # ======================================================
 # TRAIN LOOP (BATCHED & OPTIMIZED)
 # ======================================================
-print("Starting RL training 🚀 (CodeT5 PPO Stable)")
+print("Starting RL training  (CodeT5 PPO Stable)")
 
 best_reward = -1e9
 global_ppo_step = 0
@@ -282,7 +282,7 @@ for epoch in range(1, NUM_EPOCHS + 1):
         batch_prompts = []
         batch_meta = [] # Store tuple of (question, gold_sql, db_path, db_id)
 
-        # 🚀 BATCH PREPARATION
+        #  BATCH PREPARATION
         for _ in range(ppo_config.batch_size):
             example = sample_example()
             question = example["question"]
@@ -296,7 +296,7 @@ for epoch in range(1, NUM_EPOCHS + 1):
             batch_prompts.append(prompt)
             batch_meta.append((question, gold_sql, db_path, db_id))
 
-        # 🚀 SPEED OPTIMIZATION: Padded Batch Tokenization (Multiple of 8)
+        #  SPEED OPTIMIZATION: Padded Batch Tokenization (Multiple of 8)
         encoded_inputs = tokenizer(
             batch_prompts,
             return_tensors="pt",
@@ -309,7 +309,7 @@ for epoch in range(1, NUM_EPOCHS + 1):
         # TRL expects lists of 1D tensors
         query_tensors = [encoded_inputs.input_ids[i] for i in range(ppo_config.batch_size)]
 
-        # 🚀 SPEED OPTIMIZATION: Disable gradients for generation pass
+        #  SPEED OPTIMIZATION: Disable gradients for generation pass
         with torch.no_grad():
             response_tensors = trainer.generate(
                 query_tensors,
@@ -319,7 +319,7 @@ for epoch in range(1, NUM_EPOCHS + 1):
         batch_rewards = []
         batch_responses_text = []
 
-        # 🚀 BATCH SQL REWARD EXECUTION (Strictly CPU strings)
+        #  BATCH SQL REWARD EXECUTION (Strictly CPU strings)
         for i in range(ppo_config.batch_size):
             response = tokenizer.decode(response_tensors[i], skip_special_tokens=True)
             batch_responses_text.append(response)
@@ -368,10 +368,10 @@ for epoch in range(1, NUM_EPOCHS + 1):
             )
             global_ppo_step += 1
         except Exception as e:
-            print("⚠️ PPO skipped:", e)
+            print(" PPO skipped:", e)
             continue
 
-        # 🚀 AUTO CHECKPOINT SAVING: Every 200 PPO Updates
+        #  AUTO CHECKPOINT SAVING: Every 200 PPO Updates
         if global_ppo_step > 0 and global_ppo_step % 200 == 0:
             step_save_path = os.path.join(PROJECT_ROOT, f"checkpoints/rl_step_{global_ppo_step}")
             os.makedirs(step_save_path, exist_ok=True)

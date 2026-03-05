@@ -212,7 +212,7 @@ def main():
     plt.tight_layout()
     plot_path = plot_dir / "accuracy_comparison.png"
     plt.savefig(plot_path, dpi=300)
-    print(f"📈 Updated comparison plot saved to: {plot_path}")
+    print(f" Updated comparison plot saved to: {plot_path}")
 
 if __name__ == "__main__":
     main()

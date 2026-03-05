@@ -123,7 +123,7 @@ base_model = AutoModelForSeq2SeqLM.from_pretrained(BASE_MODEL)
 
 base_model.config.use_cache = False
 
-# 🚀 UPGRADE 1: Expanded LoRA brainpower
+#  UPGRADE 1: Expanded LoRA brainpower
 lora_config = LoraConfig(
     r=16,            # Increased rank for more learning capacity
     lora_alpha=32,   # Alpha is typically 2x the rank
@@ -156,7 +156,7 @@ args = Seq2SeqTrainingArguments(
     dataloader_num_workers=0,
     dataloader_pin_memory=False,
     
-    # 🚀 UPGRADE 2 & 3: Better optimization & generalization
+    #  UPGRADE 2 & 3: Better optimization & generalization
     warmup_ratio=0.05,              # Slowly ramp up learning rate
     weight_decay=0.01,              # Penalize over-reliance on single tokens
     label_smoothing_factor=0.1,     # Prevent overconfidence in SQL token matching

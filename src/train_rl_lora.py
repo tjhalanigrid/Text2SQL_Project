@@ -78,7 +78,7 @@ def generate_sql(query_tensors):
             query_tensors,
             max_new_tokens=64,
 
-            # 🔴 CRITICAL: disable sampling
+            #  CRITICAL: disable sampling
             do_sample=False,
 
             # stable decoding

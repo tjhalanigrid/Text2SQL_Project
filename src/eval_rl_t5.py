@@ -204,7 +204,7 @@ def execution_match(pred_sql, gold_sql, db_path):
 # ---------------- MAIN ----------------
 def main():
     parser = argparse.ArgumentParser()
-    # 🎯 Set the default directly to your best RLHF model!
+    #  Set the default directly to your best RLHF model!
     parser.add_argument("--adapter", type=str, default="checkpoints/rlhf_t5_best")
     parser.add_argument("--num_samples", type=int, default=1000)
     args = parser.parse_args()
@@ -217,7 +217,7 @@ def main():
     dev_json = project_root / "data" / "dev.json"
     db_root = project_root / "data" / "database"
 
-    # 🎯 Added CUDA support
+    # Added CUDA support
     device = "mps" if torch.backends.mps.is_available() else ("cuda" if torch.cuda.is_available() else "cpu")
 
     # load model
