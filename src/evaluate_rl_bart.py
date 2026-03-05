@@ -76,7 +76,7 @@ def main():
     dev_json = project_root / "data" / "dev.json"
     db_root = project_root / "data" / "database"
 
-    # 🎯 Added CUDA support for Nvidia GPUs
+    #  Added CUDA support for Nvidia GPUs
     device = "mps" if torch.backends.mps.is_available() else ("cuda" if torch.cuda.is_available() else "cpu")
 
     # load model
