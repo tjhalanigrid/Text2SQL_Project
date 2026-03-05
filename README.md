@@ -80,8 +80,6 @@ text2sql_project
 │
 ├── data/                    # Spider dataset and SQLite databases
 │
-├── checkpoints/             # SFT and RLHF trained adapters
-│
 ├── outputs/                 # RL outputs and logs
 │
 ├── comparison_plots/        # Training curve visualization
@@ -103,9 +101,10 @@ text2sql_project
 
 | Model | Pretraining Type | Parameters |
 |------|------------------|-----------|
-| T5-Small | General text-to-text transformer | ~60M |
-| BART-Base | Denoising sequence-to-sequence model | ~139M |
 | CodeT5-Base | Code-pretrained transformer | ~220M |
+| T5-Small | General text-to-text transformer | ~60M |
+| T5-Base | General text-to-text transformer | ~220M |
+| BART-Base | Denoising sequence-to-sequence model | ~139M |
 
 **CodeT5 achieved the best performance** because its code-oriented pretraining improves structured SQL generation.
 
@@ -166,8 +165,8 @@ Evaluate execution accuracy using:
 
 ```bash
 python src/evaluate_model_codet5.py \
---adapter checkpoints/sft_adapter_codet5 \
---num_samples 1000
+--adapter checkpoints/sft_adapter_codet5 
+
 ```
 
 For RLHF models:
@@ -195,23 +194,7 @@ Generated plots include:
 
 ---
 
-## 🖥 Running the Demo Locally
 
-Run the interface locally:
-
-```bash
-python app.py
-```
-
-Then open:
-
-```
-http://127.0.0.1:7860
-```
-
-The interface converts **natural language → SQL → database results**.
-
----
 
 ## 📌 Example Query
 
@@ -237,6 +220,5 @@ The system will generate the SQL query and execute it on the database.
 
 ## ✨ Author
 
-**Tanisha Jhalani**  
-B.Tech Mechanical Engineering  
+**Tanisha Jhalani**   
 Machine Learning & Systems Project
