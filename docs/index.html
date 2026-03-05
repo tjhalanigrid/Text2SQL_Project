@@ -355,7 +355,7 @@
         approximately <strong>220 million parameters</strong> and is pretrained on 
         large-scale code corpora, enabling improved structural reasoning.
     </p>
-
+ 
     <div class="plot-grid">
 
         <div>
@@ -631,10 +631,16 @@
 </section>
 
 <section>
-    <h2> Deployment & Demonstration</h2>
+    <h2>Deployment & Demonstration</h2>
+
     <p>
-        A minimal Gradio interface was developed for interactive inference:
+        A minimal Gradio interface was developed for interactive inference. 
+        You can try the live demo here:
+        <a href="https://huggingface.co/spaces/tjhalanigrid/text2sql-demo" target="_blank">
+            Text-to-SQL Live Demo
+        </a>
     </p>
+
     <ul>
         <li>Select database</li>
         <li>Enter natural language query</li>
@@ -642,10 +648,13 @@
         <li>Execute query live</li>
         <li>Display structured results</li>
     </ul>
+
     <p>
         SQL validation and grammar constraints were added to reduce invalid outputs 
         during inference.
     </p>
+
+    
 </section>
 <section>
 
@@ -721,6 +730,53 @@
         <li>Execution reward improves semantic reasoning but suffers from sparse signal.</li>
         <li>Grammar constraints enhance inference stability.</li>
         <li>Human evaluation is critical beyond strict execution metrics.</li>
+    </ul>
+</section>
+<section>
+    <h2>Future Experiments</h2>
+
+    <p>
+        Several directions remain for improving the performance and robustness of the
+        Text-to-SQL system. Future work can focus on expanding model capabilities,
+        improving reward design, and scaling experiments to larger datasets.
+    </p>
+
+    <ul>
+        <li>
+            <strong>Larger Model Architectures:</strong>
+            Experiment with larger transformer models such as T5-Large or CodeT5+ to
+            evaluate improvements in structured SQL generation.
+        </li>
+
+        <li>
+            <strong>Improved RL Reward Design:</strong>
+            Explore more sophisticated reward functions that incorporate SQL structure
+            validity, partial query correctness, and schema alignment.
+        </li>
+
+        <li>
+            <strong>Schema Linking Enhancements:</strong>
+            Implement stronger schema linking techniques to better connect natural
+            language tokens with database tables and columns.
+        </li>
+
+        <li>
+            <strong>Cross-Domain Generalization:</strong>
+            Evaluate the model on additional unseen databases to test generalization
+            beyond the Spider dataset.
+        </li>
+
+        <li>
+            <strong>Conversational Text-to-SQL:</strong>
+            Extend the system to support multi-turn conversations where users refine
+            queries interactively.
+        </li>
+
+        <li>
+            <strong>Deployment Optimization:</strong>
+            Optimize inference latency and memory usage for production deployment
+            through model compression or quantization techniques.
+        </li>
     </ul>
 </section>
 
