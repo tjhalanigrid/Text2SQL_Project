@@ -90,9 +90,9 @@ Text2SQL_Project
 │
 ├── experiments/              # Best model checkpoints and experiment configurations
 │
-├── app.py                    # Gradio interactive demo (Natural Language → SQL)
+├── scripts                   # for evaluation of final model              
 │
-├── inference.py              # Runs trained model to generate SQL queries                # Enables GitHub Pages for docs without Jekyll processing
+├── app.py                    # Gradio interactive demo (Natural Language → SQL)
 │
 └── README.md                 # Complete project documentation
 ```
