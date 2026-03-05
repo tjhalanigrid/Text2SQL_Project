@@ -19,3 +19,11 @@ data/database/
 # Mac files
 .DS_Store
 text2sql-demo/
+
+
+
+inference.py
+run_sql.py
+run_text2sql.py
+schema_utils.py
+sql_cleaner.py
