@@ -92,7 +92,7 @@ text2sql_project
 │
 ├── requirements.txt         # Project dependencies
 |
-├── Experiments        # best model checkpoints
+├── Experiments              # best model checkpoints
 │
 └── README.md                # Project documentation
 ```
