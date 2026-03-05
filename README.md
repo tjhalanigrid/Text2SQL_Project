@@ -92,21 +92,7 @@ Text2SQL_Project
 │
 ├── app.py                    # Gradio interactive demo (Natural Language → SQL)
 │
-├── inference.py              # Runs trained model to generate SQL queries
-│
-├── run_text2sql.py           # Main pipeline for converting text queries to SQL
-│
-├── run_sql.py                # Executes generated SQL queries on SQLite databases
-│
-├── schema_utils.py           # Utilities for reading and encoding database schema
-│
-├── sql_cleaner.py            # SQL post-processing and normalization utilities
-│
-├── requirements.txt          # Python dependencies required to run the project
-│
-├── .gitignore                # Files and folders ignored by Git
-│
-├── .nojekyll                 # Enables GitHub Pages for docs without Jekyll processing
+├── inference.py              # Runs trained model to generate SQL queries                # Enables GitHub Pages for docs without Jekyll processing
 │
 └── README.md                 # Complete project documentation
 ```
