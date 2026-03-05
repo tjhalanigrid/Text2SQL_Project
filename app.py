@@ -25,20 +25,14 @@ SAMPLES = [
     ("List the airlines that fly out of New York.", "flight_1"),
     ("Which campus was opened between 1935 and 1939?", "csu_1"),
     
-    # ("Find the building, room number, semester and year of all courses offered by Psychology.", "college_2"),
+  
     ("Count the number of students in each department.", "college_2"),
-    # ("List all student names and their assessment scores.", "student_assessment"),
-    # ("Which student has the highest total score?", "student_assessment"),
-    # ("Show the titles of all books published after 2000.", "book_2"),
-    # ("Who is the author of the book with the highest price?", "book_2"),
+  
     ("List the names of all clubs.", "club_1"),
     ("How many members does each club have?", "club_1"),
     ("Show the names of all cinemas.", "cinema"),
     ("Which cinema has the most screens?", "cinema")
-    # ("List the names of all car makers.", "car_1"),
-    # ("What is the average horsepower of cars produced in 2000?", "car_1"),
-    # ("Show the names of all authors and the number of publications they have.", "academic"),
-    # ("Find the names and prices of all products in the electronics department.", "department_store")
+    
 ]
 
 # Extract just the questions for the dropdown
