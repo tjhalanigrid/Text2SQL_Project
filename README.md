@@ -91,6 +91,8 @@ text2sql_project
 ├── app.py                   # Gradio interactive demo
 │
 ├── requirements.txt         # Project dependencies
+|
+├── Experiments        # best model checkpoints
 │
 └── README.md                # Project documentation
 ```
