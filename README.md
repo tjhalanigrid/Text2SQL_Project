@@ -1,4 +1,4 @@
-Text-to-SQL using SFT + RLHF (Spider Benchmark)
+🚀 Text-to-SQL using SFT + RLHF (Spider Benchmark)
 📌 Project Overview
 
 This project implements a cross-domain Text-to-SQL system trained on the Spider benchmark dataset.
@@ -7,9 +7,11 @@ The system converts natural language questions into executable SQL queries acros
 To improve SQL generation quality, the project explores a two-stage training pipeline:
 
 1️⃣ Supervised Fine-Tuning (SFT)
+
 Learns SQL syntax and query structure from labeled examples.
 
 2️⃣ Reinforcement Learning with Execution Rewards (RLHF / PPO)
+
 Improves logical correctness by rewarding queries that return correct results when executed on the database.
 
 Multiple transformer architectures were evaluated to analyze how different pretraining strategies affect structured SQL generation.
@@ -20,9 +22,10 @@ You can explore the project using the following resources.
 
 🖥 Interactive Text-to-SQL Demo (Gradio Interface)
 
-Try converting natural language → SQL → database results:
+Try converting natural language → SQL → database results
 
-🔗 https://huggingface.co/spaces/tjhalanigrid/text2sql-demo
+🔗 Live Demo:
+https://huggingface.co/spaces/tjhalanigrid/text2sql-demo
 
 The demo allows users to:
 
@@ -38,9 +41,10 @@ See the resulting table returned by the query
 
 📄 Project Report & Experimental Analysis
 
-🔗 https://tjhalanigrid.github.io/Text2SQL_Project/
+🔗 Project Report:
+https://tjhalanigrid.github.io/Text2SQL_Project/
 
-The report contains detailed explanations of:
+The report includes:
 
 System architecture
 
@@ -97,8 +101,7 @@ Schema-Aware Prompting
 
 The database schema is explicitly serialized during input construction.
 
-Example:
-
+Example
 Tables:
 employee(id, name, city)
 department(id, department_name)
@@ -148,7 +151,7 @@ T5-Small	General text-to-text transformer	~60M
 BART-Base	Denoising sequence-to-sequence model	~139M
 CodeT5-Base	Code-pretrained transformer	~220M
 
-CodeT5 achieved the best performance, likely due to its code-oriented pretraining, which helps generate structured outputs such as SQL queries.
+CodeT5 achieved the best performance because its code-oriented pretraining helps generate structured outputs such as SQL queries.
 
 📊 Main Results (Execution Accuracy)
 Model	SFT Accuracy	RLHF Accuracy
@@ -156,35 +159,31 @@ T5-Small	9.0%	8.3%
 BART-Base	24.0%	21.23%
 CodeT5-Base	41.7%	37.9%
 
-Although RLHF slightly reduced execution accuracy in some cases, it improved semantic alignment and logical correctness, which was confirmed through manual inspection of generated queries.
+Although RLHF slightly reduced execution accuracy in some cases, it improved semantic alignment and logical correctness, confirmed through manual inspection of generated queries.
 
 🧪 Training Pipeline
 Stage 1 — Supervised Fine-Tuning (SFT)
 
 Models are trained using cross-entropy loss against ground-truth SQL queries.
 
-Run training:
-
+Run Training
 python src/train_sft.py
 python src/train_sft_codet5.py
 python src/train_sft_bart.py
 Stage 2 — Reinforcement Learning (RLHF / PPO)
 
-The model is further optimized using execution-based rewards.
+The model is further optimized using execution-based reward signals.
 
-Reward logic:
-
+Reward Logic
 +1 if predicted SQL returns same result as ground truth
 Penalty for invalid SQL
-
-Training scripts:
-
+Training Scripts
 python src/train_rl.py
 python src/train_rl_codet5.py
 python src/train_rl_bart.py
 📈 Evaluation
 
-Execution accuracy can be evaluated using the following script:
+Evaluate execution accuracy using:
 
 python src/evaluate_model_codet5.py \
 --adapter checkpoints/sft_adapter_codet5 \
@@ -196,7 +195,7 @@ python src/eval_rl_fixed.py \
 --adapter checkpoints/best_rlhf_model
 📊 Visualization
 
-Training curves and model comparisons can be generated using:
+Generate training curves and comparisons:
 
 python comparison_plots/parse_and_plot.py --window 7
 
@@ -210,7 +209,7 @@ Cross-model performance comparisons
 
 🖥 Running the Demo Locally
 
-You can run the interactive interface locally:
+Run the interface locally:
 
 python app.py
 
@@ -218,7 +217,7 @@ Then open:
 
 http://127.0.0.1:7860
 
-The interface allows users to enter a natural language question, generate SQL, and view the executed database results.
+The interface allows users to enter natural language questions, generate SQL queries, and view database results.
 
 ✨ Author
 
@@ -228,7 +227,7 @@ Machine Learning & Systems Project
 
 💡 Future Improvements
 
-Possible extensions for this project include:
+Possible extensions include:
 
 Training larger models (T5-Large, CodeT5+)
 
