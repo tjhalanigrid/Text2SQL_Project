@@ -1,49 +1,44 @@
-# 🚀 Text-to-SQL using SFT + RLHF (Spider Benchmark)
+# Text-to-SQL using SFT + RLHF (Spider Benchmark)
 
 ## 📌 Project Overview
+This project implements a **cross-domain Text-to-SQL system** trained on the **Spider benchmark dataset**.
 
-This project implements a **cross-domain Text-to-SQL system** trained on the **Spider benchmark dataset**.  
 The system converts **natural language questions into executable SQL queries** across multiple relational databases.
 
 To improve SQL generation quality, the project explores a **two-stage training pipeline**:
 
 ### 1️⃣ Supervised Fine-Tuning (SFT)
-
 Learns SQL syntax and query structure from labeled examples.
 
 ### 2️⃣ Reinforcement Learning with Execution Rewards (RLHF / PPO)
-
 Improves logical correctness by rewarding queries that return correct results when executed on the database.
 
-Multiple transformer architectures were evaluated to analyze how **different pretraining strategies affect structured SQL generation**.
+Multiple transformer architectures were evaluated to understand how **different pretraining strategies affect structured SQL generation**.
 
 ---
 
-# 🌐 Live Demo & Project Report
+## 🌐 Live Demo
 
-You can explore the project using the following resources.
+Try the interactive Text-to-SQL system here:
 
-## 🖥 Interactive Text-to-SQL Demo (Gradio Interface)
-
-Try converting **natural language → SQL → database results**
-
-🔗 **Live Demo**  
+🔗 **Gradio Demo**  
 https://huggingface.co/spaces/tjhalanigrid/text2sql-demo
 
 The demo allows users to:
 
-- Enter natural language questions
-- Automatically generate SQL queries
-- View the generated SQL statement
-- Execute the query on a SQLite database
-- See the resulting table returned by the query
+- Enter **natural language questions**
+- Generate **SQL queries automatically**
+- View the **generated SQL query**
+- Execute queries on **SQLite databases**
+- View the **result table returned by the query**
 
 ---
 
-## 📄 Project Report & Experimental Analysis
+## 📄 Project Report
 
-🔗 **Project Report**  
-https://tjhalanigrid.github.io/Text2SQL_Project/
+Full project report with architecture explanation, experiments, and evaluation results:
+
+🔗 https://tjhalanigrid.github.io/Text2SQL_Project/
 
 The report includes:
 
@@ -57,95 +52,54 @@ The report includes:
 
 ---
 
-# 🎯 Objectives
+## 🚀 Features
 
-The main objectives of this project are:
+- **Multi-Model Experimentation**  
+  Experiments with **T5-Small, BART-Base, and CodeT5-Base**
 
-- Generate **accurate and executable SQL queries** from natural language questions
-- Evaluate the impact of **execution-based reinforcement learning**
-- Compare different **transformer architectures** for structured query generation
-- Build an **interactive inference interface** for real-time Text-to-SQL conversion
+- **Execution-Based Reinforcement Learning**  
+  SQL queries are executed against SQLite databases and rewarded based on correctness.
 
----
+- **Schema-Aware Prompting**  
+  Database schemas are serialized to improve grounding.
 
-# 🚀 Key Features
+- **Evaluation Pipeline**  
+  Includes Spider-style execution accuracy evaluation.
 
-## Multi-Model Experimentation
-
-Three transformer architectures were evaluated:
-
-- **T5-Small**
-- **BART-Base**
-- **CodeT5-Base**
-
-These models represent different **pretraining strategies**, allowing comparison of their ability to generate structured SQL.
+- **Interactive Demo Interface**  
+  Natural language → SQL → database results using Gradio.
 
 ---
 
-## Execution-Based Reinforcement Learning
-
-Generated SQL queries are executed against **SQLite databases** to compute reward signals.
-
-**Reward mechanism:**
-
-- **+1 reward** if predicted SQL returns the same result as the ground truth query
-- **Penalty** for invalid or incorrect SQL queries
-
-This encourages the model to produce **logically correct and executable SQL**.
-
----
-
-## Schema-Aware Prompting
-
-The database schema is explicitly serialized during input construction.
-
-Example:
+## 📁 Project Structure
 
 ```
-Tables:
-employee(id, name, city)
-department(id, department_name)
-
-Question:
-Show employees who live in Calgary
-```
-
-This improves **schema grounding** and reduces hallucinated SQL queries.
-
----
-
-## Evaluation & Analysis
-
-Model performance is evaluated using **Spider-style execution accuracy**.
-
-The project includes:
-
-- Execution accuracy evaluation
-- Custom evaluation scripts
-- Training curve visualization
-- Cross-model performance comparison
-
----
-
-# 📁 Project Structure
-
-```
-text2sql_project/
-
+text2sql_project
+│
 ├── src/                     # Training, evaluation, inference scripts
+│
 ├── data/                    # Spider dataset and SQLite databases
-├── checkpoints/             # SFT and RLHF trained model adapters
-├── outputs/                 # Intermediate RL outputs and logs
-├── comparison_plots/        # Training curve generation scripts
-├── docs/                    # HTML report and visualizations
+│
+├── checkpoints/             # SFT and RLHF trained adapters
+│
+├── outputs/                 # RL outputs and logs
+│
+├── comparison_plots/        # Training curve visualization
+│
+├── docs/                    # HTML report and figures
+│
 ├── spider_eval/             # Official Spider evaluation scripts
-├── app.py                   # Gradio interactive demo interface
+│
+├── app.py                   # Gradio interactive demo
+│
+├── requirements.txt         # Project dependencies
+│
 └── README.md                # Project documentation
 ```
 
 ---
 
-# 🧠 Models Evaluated
+## 🧠 Models Evaluated
 
 | Model | Pretraining Type | Parameters |
 |------|------------------|-----------|
@@ -153,11 +107,11 @@ text2sql_project/
 | BART-Base | Denoising sequence-to-sequence model | ~139M |
 | CodeT5-Base | Code-pretrained transformer | ~220M |
 
-**CodeT5 achieved the best performance** because its code-oriented pretraining helps generate **structured outputs such as SQL queries**.
+**CodeT5 achieved the best performance** because its code-oriented pretraining improves structured SQL generation.
 
 ---
 
-# 📊 Main Results (Execution Accuracy)
+## 📊 Results (Execution Accuracy)
 
 | Model | SFT Accuracy | RLHF Accuracy |
 |------|--------------|---------------|
@@ -165,19 +119,19 @@ text2sql_project/
 | BART-Base | 24.0% | 21.23% |
 | CodeT5-Base | **41.7%** | **37.9%** |
 
-Although RLHF slightly reduced execution accuracy in some cases, it improved **semantic alignment and logical correctness**, confirmed through manual inspection of generated queries.
+Although RLHF slightly reduced execution accuracy in some cases, it improved **semantic alignment and logical reasoning**, confirmed through manual evaluation.
 
 ---
 
-# 🧪 Training Pipeline
+## 🧪 Training Pipeline
 
-## Stage 1 — Supervised Fine-Tuning (SFT)
+### Stage 1 — Supervised Fine-Tuning (SFT)
 
 Models are trained using **cross-entropy loss** against ground-truth SQL queries.
 
 Run training:
 
-```
+```bash
 python src/train_sft.py
 python src/train_sft_codet5.py
 python src/train_sft_bart.py
@@ -185,20 +139,20 @@ python src/train_sft_bart.py
 
 ---
 
-## Stage 2 — Reinforcement Learning (RLHF / PPO)
+### Stage 2 — Reinforcement Learning (RLHF / PPO)
 
-The model is further optimized using **execution-based reward signals**.
+The model is further optimized using **execution-based rewards**.
 
 Reward logic:
 
 ```
-+1 if predicted SQL returns same result as ground truth
++1 if predicted SQL returns the same result as the ground truth query
 Penalty for invalid SQL
 ```
 
 Training scripts:
 
-```
+```bash
 python src/train_rl.py
 python src/train_rl_codet5.py
 python src/train_rl_bart.py
@@ -206,30 +160,30 @@ python src/train_rl_bart.py
 
 ---
 
-# 📈 Evaluation
+## 📈 Evaluation
 
 Evaluate execution accuracy using:
 
-```
+```bash
 python src/evaluate_model_codet5.py \
 --adapter checkpoints/sft_adapter_codet5 \
 --num_samples 1000
 ```
 
-For RLHF-trained models:
+For RLHF models:
 
-```
+```bash
 python src/eval_rl_fixed.py \
 --adapter checkpoints/best_rlhf_model
 ```
 
 ---
 
-# 📊 Visualization
+## 📊 Visualization
 
 Generate training curves and comparisons:
 
-```
+```bash
 python comparison_plots/parse_and_plot.py --window 7
 ```
 
@@ -241,11 +195,11 @@ Generated plots include:
 
 ---
 
-# 🖥 Running the Demo Locally
+## 🖥 Running the Demo Locally
 
 Run the interface locally:
 
-```
+```bash
 python app.py
 ```
 
@@ -255,24 +209,34 @@ Then open:
 http://127.0.0.1:7860
 ```
 
-The interface allows users to **enter natural language questions, generate SQL queries, and view database results**.
+The interface converts **natural language → SQL → database results**.
 
 ---
 
-# ✨ Author
+## 📌 Example Query
+
+Example question you can try:
+
+```
+Show the names of employees who live in Calgary
+```
+
+The system will generate the SQL query and execute it on the database.
+
+---
+
+## 💡 Future Improvements
+
+- Train larger models (**T5-Large, CodeT5+**)
+- Improve reward shaping strategies for RLHF
+- Better schema linking techniques
+- Support multi-turn conversational queries
+- Deploy optimized inference pipeline
+
+---
+
+## ✨ Author
 
 **Tanisha Jhalani**  
 B.Tech Mechanical Engineering  
 Machine Learning & Systems Project
-
----
-
-# 💡 Future Improvements
-
-Possible extensions include:
-
-- Training larger models (**T5-Large, CodeT5+**)
-- Improved **reward shaping strategies for RLHF**
-- Enhanced **schema linking mechanisms**
-- Support for **multi-turn conversational SQL queries**
-- Deployment with **optimized inference pipelines** 
