@@ -176,10 +176,11 @@ SQL:
         text = text.strip()
         if "SQL:" in text:
             text = text.split("SQL:")[-1]
-        match = re.search(r"select[\s\S]*", text, re.IGNORECASE)
+        match = re.search(r"(with|select)[\s\S]*", text, re.IGNORECASE)
         if match:
             text = match.group(0)
-        return text.split(";")[0].strip()
+            return text.split(";")[0].strip()
+        return ""
 
     def clean_sql(self, sql: str):
         sql = sql.replace('"', "'")
@@ -294,6 +295,23 @@ SQL:
         
         # is_repair=False -> Uses strict Beam Search
         raw_sql = self.generate_sql(prompt, is_repair=False) 
+        if not raw_sql:
+            strict_prompt = (
+                f"{prompt}\n"
+                "Return ONLY a valid SQLite query.\n"
+                "Do not explain anything.\n"
+                "The first token must be SELECT or WITH.\n"
+                "SQL:\n"
+            )
+            raw_sql = self.generate_sql(strict_prompt, is_repair=False)
+        if not raw_sql:
+            return {
+                "question": question,
+                "sql": "-- NO_SQL_GENERATED",
+                "columns": [],
+                "rows": [],
+                "error": "Model failed to generate valid SQL (SELECT/WITH). Check LoRA adapter loading."
+            }
         
         # 2. First Execution Attempt
         final_sql, cols, rows, error = self.execute_sql(question, raw_sql, db_id)
