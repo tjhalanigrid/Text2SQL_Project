@@ -109,13 +109,14 @@ class Text2SQLEngine:
             return
 
         print(f"Loading tokenizer and LoRA adapter from: {adapter_path}")
+        adapter_path_for_peft = os.path.relpath(adapter_path, PROJECT_ROOT)
         try:
             self.tokenizer = AutoTokenizer.from_pretrained(str(adapter_path), local_files_only=True)
         except Exception:
             self.tokenizer = AutoTokenizer.from_pretrained(base_model_name)
 
         try:
-            self.model = PeftModel.from_pretrained(base, str(adapter_path), local_files_only=True).to(self.device)
+            self.model = PeftModel.from_pretrained(base, adapter_path_for_peft, local_files_only=True).to(self.device)
             self.model.eval()
             print("✅ RLHF model ready\n")
         except Exception as e:

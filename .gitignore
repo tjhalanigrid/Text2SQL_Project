@@ -2,30 +2,76 @@
 __pycache__/
 *.pyc
 
-# Model weights
-*.bin
-*.pt
-*.safetensors
-
 # Model folders
 models/
 # checkpoints/
 
-# Databases (Spider dataset)
-data/database/
-*.sqlite
-*.db
+# Databases: ignore all by default
+# Keep only selected DBs used by app/demo.
+data/database/*
+!data/database/flight_1/
+!data/database/student_assessment/
+!data/database/store_1/
+!data/database/bike_1/
+!data/database/book_2/
+!data/database/chinook_1/
+!data/database/academic/
+!data/database/aircraft/
+!data/database/car_1/
+!data/database/cinema/
+!data/database/club_1/
+!data/database/csu_1/
+!data/database/college_1/
+!data/database/college_2/
+!data/database/company_1/
+!data/database/company_employee/
+!data/database/customer_complaints/
+!data/database/department_store/
+!data/database/employee_hire_evaluation/
+!data/database/museum_visit/
+!data/database/products_for_hire/
+!data/database/restaurant_1/
+!data/database/school_finance/
+!data/database/shop_membership/
+!data/database/small_bank_1/
+# soccer_1 is intentionally ignored (file >100MB; GitHub hard limit)
+!data/database/student_1/
+!data/database/tvshow/
+!data/database/voter_1/
+!data/database/world_1/
+
+!data/database/flight_1/**
+!data/database/student_assessment/**
+!data/database/store_1/**
+!data/database/bike_1/**
+!data/database/book_2/**
+!data/database/chinook_1/**
+!data/database/academic/**
+!data/database/aircraft/**
+!data/database/car_1/**
+!data/database/cinema/**
+!data/database/club_1/**
+!data/database/csu_1/**
+!data/database/college_1/**
+!data/database/college_2/**
+!data/database/company_1/**
+!data/database/company_employee/**
+!data/database/customer_complaints/**
+!data/database/department_store/**
+!data/database/employee_hire_evaluation/**
+!data/database/museum_visit/**
+!data/database/products_for_hire/**
+!data/database/restaurant_1/**
+!data/database/school_finance/**
+!data/database/shop_membership/**
+!data/database/small_bank_1/**
+!data/database/student_1/**
+!data/database/tvshow/**
+!data/database/voter_1/**
+!data/database/world_1/**
 
 # Mac files
 .DS_Store
 text2sql-demo/
-
-
-
-# inference.py
-# run_sql.py
-# run_text2sql.py
-# schema_utils.py
-# sql_cleaner.py
 
 sample.txt
