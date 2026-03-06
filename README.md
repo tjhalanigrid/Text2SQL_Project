@@ -99,6 +99,58 @@ Text2SQL_Project
 
 ---
 
+##  Repository Files & Folders (Detailed)
+
+- `.vscode/`  
+  Local editor settings for VS Code (workspace preferences, optional).
+
+- `checkpoints/`  
+  Saved LoRA adapters and model checkpoints used by training/evaluation (`best_rlhf_model`, SFT/RL snapshots).
+
+- `comparison_plots/`  
+  Parsed metrics JSON/CSV and generated model comparison plots.
+
+- `data/`  
+  Spider data artifacts, evaluation files (`dev.json`, `tables.json`, gold SQL), and selected SQLite databases.
+
+- `docs/`  
+  Static project report site files (HTML, CSS, images/figures).
+
+- `experiments/v1_codet5_rlhf/`  
+  Experiment-specific RLHF assets/config/results for CodeT5 pipeline.
+
+- `outputs/`  
+  Intermediate and epoch-wise output artifacts from training/evaluation runs.
+
+- `scripts/`  
+  Utility scripts for evaluation and report/plot generation.
+
+- `spider_eval/`  
+  Official Spider evaluation utilities used for exact/execution metrics.
+
+- `src/`  
+  Main source code: training, RLHF, inference engine, evaluation, prompt/schema helpers.
+
+- `.gitignore`  
+  Git tracking rules for local artifacts, checkpoints, and selected include/exclude paths.
+
+- `.nojekyll`  
+  Ensures GitHub Pages serves files without Jekyll processing.
+
+- `README.md`  
+  Project documentation (setup, run commands, evaluation, troubleshooting).
+
+- `app.py`  
+  Gradio UI entrypoint for Text-to-SQL demo (question -> SQL -> execution results).
+
+- `pred.sql`  
+  Generated prediction file produced by evaluation scripts (run artifact; may be regenerated).
+
+- `requirment.txt`  
+  Python dependency list used for environment setup.
+
+---
+
 ##  Installation & Setup
 
 ### Prerequisites
@@ -250,38 +302,11 @@ python src/generate_sql.py \
   --db_id chinook_1
 ```
 
-### Evaluate (example)
-
-```bash
-python src/evaluate_model_codet5.py --adapter checkpoints/sft_adapter_codet5
-python src/eval_rl_fixed.py --adapter checkpoints/best_rlhf_model
-```
 
 ---
 
-## 🧪 Experiment Commands
 
-1. **SFT checkpoint evaluation (CodeT5)**
-```bash
-python src/evaluate_model_codet5.py --adapter checkpoints/sft_adapter_codet5
-```
 
-2. **RLHF checkpoint evaluation**
-```bash
-python src/eval_rl_fixed.py --adapter checkpoints/best_rlhf_model
-```
-
-3. **Combined metric evaluation (EM + EX)**
-```bash
-python src/eval_both_metrics.py --adapter checkpoints/best_rlhf_model
-```
-
-4. **Model comparison plot generation**
-```bash
-python comparison_plots/parse_and_plot.py --window 7
-```
-
----
 
 ## 🖥️ Gradio UI (Inference)
 
