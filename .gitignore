@@ -9,7 +9,7 @@ __pycache__/
 
 # Model folders
 models/
-checkpoints/
+# checkpoints/
 
 # Databases (Spider dataset)
 data/database/

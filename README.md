@@ -109,7 +109,7 @@ Text2SQL_Project
 ### Install dependencies
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirment.txt
 ```
 
 ### Activate venv (recommended)
