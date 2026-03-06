@@ -42,7 +42,7 @@ def semantic_fix(question, sql):
 
 class Text2SQLEngine:
     @staticmethod
-    def _resolve_adapter_path(adapter_path: str) -> Path:
+    def _resolve_adapter_path(adapter_path: str) -> Path | None:
         """
         Resolve adapter path with sensible fallbacks for local runs and cloned repos.
         Priority:
@@ -68,11 +68,11 @@ class Text2SQLEngine:
             if c.is_dir() and (c / "adapter_config.json").exists():
                 return c
 
-        tried = "\n - " + "\n - ".join(str(c.resolve()) for c in candidates)
-        raise FileNotFoundError(
-            "Could not find a valid LoRA adapter directory. Expected adapter_config.json in one of these paths:"
-            f"{tried}\nSet TEXT2SQL_ADAPTER_PATH to your adapter directory if needed."
-        )
+        print("⚠️ No valid LoRA adapter directory found. Falling back to base model.")
+        print("Searched adapter paths:")
+        for c in candidates:
+            print(f" - {c.resolve()}")
+        return None
 
     def __init__(self,
                  adapter_path="checkpoints/best_rlhf_model",
@@ -101,16 +101,28 @@ class Text2SQLEngine:
             return
 
         adapter_path = self._resolve_adapter_path(adapter_path)
-        
-        print("Loading tokenizer and LoRA adapter...")
+        if adapter_path is None:
+            self.tokenizer = AutoTokenizer.from_pretrained(base_model_name)
+            self.model = base.to(self.device)
+            self.model.eval()
+            print("✅ Base model ready (LoRA adapter not found)\n")
+            return
+
+        print(f"Loading tokenizer and LoRA adapter from: {adapter_path}")
         try:
             self.tokenizer = AutoTokenizer.from_pretrained(str(adapter_path), local_files_only=True)
         except Exception:
             self.tokenizer = AutoTokenizer.from_pretrained(base_model_name)
 
-        self.model = PeftModel.from_pretrained(base, str(adapter_path), local_files_only=True).to(self.device)
-        self.model.eval()
-        print("✅ RLHF model ready\n")
+        try:
+            self.model = PeftModel.from_pretrained(base, str(adapter_path), local_files_only=True).to(self.device)
+            self.model.eval()
+            print("✅ RLHF model ready\n")
+        except Exception as e:
+            print(f"⚠️ Failed to load LoRA adapter ({e}). Falling back to base model.")
+            self.model = base.to(self.device)
+            self.model.eval()
+            print("✅ Base model ready (LoRA load failed)\n")
 
     # ==========================================
     # ---------------- PROMPT BUILDERS ---------
@@ -313,8 +325,14 @@ SQL:
         }
 
 _engine = None
-def get_engine():
+def get_engine(adapter_path=None, base_model_name=None, use_lora=True):
     global _engine
     if _engine is None:
-        _engine = Text2SQLEngine()
+        kwargs = {}
+        if adapter_path:
+            kwargs["adapter_path"] = adapter_path
+        if base_model_name:
+            kwargs["base_model_name"] = base_model_name
+        kwargs["use_lora"] = use_lora
+        _engine = Text2SQLEngine(**kwargs)
     return _engine

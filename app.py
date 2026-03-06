@@ -199,9 +199,24 @@ import gradio as gr
 import pandas as pd
 import re
 import time
+import os
 from src.text2sql_engine import get_engine
 
-engine = get_engine()
+adapter_path = os.environ.get("TEXT2SQL_ADAPTER_PATH")
+base_model_name = os.environ.get("TEXT2SQL_BASE_MODEL")
+use_lora_env = os.environ.get("TEXT2SQL_USE_LORA", "true").strip().lower()
+use_lora = use_lora_env not in {"0", "false", "no"}
+
+print("Text2SQL startup config:")
+print(f"- TEXT2SQL_ADAPTER_PATH: {adapter_path or '(default/fallback)'}")
+print(f"- TEXT2SQL_BASE_MODEL: {base_model_name or '(default)'}")
+print(f"- TEXT2SQL_USE_LORA: {use_lora}")
+
+engine = get_engine(
+    adapter_path=adapter_path,
+    base_model_name=base_model_name,
+    use_lora=use_lora,
+)
 
 # =========================
 # SAMPLE QUESTIONS DATA
@@ -469,4 +484,3 @@ with gr.Blocks(theme=gr.themes.Soft(), title="Text-to-SQL RLHF") as demo:
 
 if __name__ == "__main__":
     demo.launch()
-

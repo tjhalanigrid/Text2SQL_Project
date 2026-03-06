@@ -109,7 +109,7 @@ Text2SQL_Project
 ### Install dependencies
 
 ```bash
-pip install -r requirment.txt
+python -m pip install -r requirment.txt
 ```
 
 ### Activate venv (recommended)
@@ -134,7 +134,8 @@ cd Text2SQL_Project
 ```bash
 python3 -m venv venv
 source venv/bin/activate
-pip install -r requirment.txt
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -r requirment.txt
 ```
 
 ### 3. Run UI directly (no retraining required)
@@ -152,9 +153,37 @@ open docs/index.html
 
 ### Notes for new users
 
-- If adapter files are present in `checkpoints/best_rlhf_model`, UI runs with your tuned model.
-- If adapter is missing, update the adapter path in `app.py` or keep your local adapter in the same path.
+- If adapter files are present in `checkpoints/best_rlhf_model`, UI uses them.
+- If not, app automatically falls back to:
+  - `experiments/v1_codet5_rlhf/best_rlhf_model`
+  - then base model (no LoRA) if adapter is unavailable.
+- You can force adapter path with:
+  - `export TEXT2SQL_ADAPTER_PATH=experiments/v1_codet5_rlhf/best_rlhf_model`
 - Runtime artifacts are written under `outputs/` and `comparison_plots/`.
+
+### If you already cloned before updates
+
+```bash
+cd Text2SQL_Project
+git pull
+source venv/bin/activate
+python app.py
+```
+
+### Troubleshooting
+
+1. `PermissionError` from `/opt/miniconda3/bin/pip`
+   Use venv pip only:
+   ```bash
+   source venv/bin/activate
+   python -m pip install -r requirment.txt
+   ```
+2. Adapter path / `HFValidationError`
+   Set adapter path explicitly:
+   ```bash
+   export TEXT2SQL_ADAPTER_PATH=experiments/v1_codet5_rlhf/best_rlhf_model
+   python app.py
+   ```
 
 ---
 
