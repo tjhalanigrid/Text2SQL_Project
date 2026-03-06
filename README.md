@@ -253,7 +253,7 @@ python app.py
 
 ---
 
-## ✅ Core Tasks
+##  Core Tasks
 
 🔹 **Task 1: Data preparation**
 - Prepare Spider JSON and SQLite artifacts needed for training and evaluation.
@@ -279,7 +279,7 @@ python app.py
 
 ---
 
-## 📊 Key Results Snapshot
+##  Key Results Snapshot
 
 - Best model family in this project: **CodeT5-Base**.
 - Best reported SFT execution accuracy: **41.7%**.
@@ -288,7 +288,7 @@ python app.py
 
 ---
 
-## 🏋️ Training & Inference
+##  Training & Inference
 
 ### Train
 
@@ -333,7 +333,7 @@ The UI supports:
 
 ---
 
-## 📈 Plot Dashboard
+##  Plot Dashboard
 
 Generate/rebuild comparison plots:
 
@@ -349,7 +349,7 @@ open docs/index.html
 
 ---
 
-## 🎯 Recommended Production Config
+##  Recommended Production Config
 
 Use this for stable deployment:
 - model/adapter: `checkpoints/best_rlhf_model`
