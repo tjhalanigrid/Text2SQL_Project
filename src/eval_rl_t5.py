@@ -3,6 +3,7 @@ import json
 import sqlite3
 import argparse
 import time
+import os
 from pathlib import Path
 import torch
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
@@ -63,13 +64,14 @@ def main():
     parser = argparse.ArgumentParser()
     #  Set the default directly to your best RLHF model!
     parser.add_argument("--adapter", type=str, default="checkpoints/rlhf_t5_best")
-    parser.add_argument("--num_samples", type=int, default=1000)
+    parser.add_argument("--num_samples", type=int, default=700)
     args = parser.parse_args()
 
     project_root = Path(__file__).resolve().parents[1]
     
     # Resolve adapter path safely
     adapter_path = project_root / args.adapter
+    adapter_for_peft = os.path.relpath(adapter_path, project_root)
 
     dev_json = project_root / "data" / "dev.json"
     db_root = project_root / "data" / "database"
@@ -82,9 +84,9 @@ def main():
     print(f"Loading Base: {base_model}")
     print(f"Loading Adapter: {adapter_path}")
     
-    tokenizer = AutoTokenizer.from_pretrained(str(adapter_path))
+    tokenizer = AutoTokenizer.from_pretrained(str(adapter_path), local_files_only=True)
     base = AutoModelForSeq2SeqLM.from_pretrained(base_model).to(device)
-    model = PeftModel.from_pretrained(base, str(adapter_path)).to(device)
+    model = PeftModel.from_pretrained(base, adapter_for_peft, local_files_only=True).to(device)
     model = model.merge_and_unload()
 
     with open(dev_json) as f:

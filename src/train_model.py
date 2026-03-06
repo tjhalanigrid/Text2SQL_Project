@@ -1,4 +1,5 @@
 import torch
+import inspect
 from datasets import load_from_disk
 from transformers import (
     T5ForConditionalGeneration,
@@ -54,28 +55,27 @@ data_collator = DataCollatorForSeq2Seq(
 # ======================================================
 print("Setting training config...")
 
-training_args = Seq2SeqTrainingArguments(
+training_kwargs = dict(
     output_dir="outputs/model",
-
-    evaluation_strategy="epoch",
     save_strategy="epoch",
-
     learning_rate=3e-4,
     num_train_epochs=5,
-
     per_device_train_batch_size=1,
     per_device_eval_batch_size=1,
     gradient_accumulation_steps=8,
-
     logging_steps=50,
-
     fp16=False,
     bf16=False,
     dataloader_pin_memory=False,
-
     predict_with_generate=True,
-    report_to="none"
+    report_to="none",
 )
+if "evaluation_strategy" in inspect.signature(Seq2SeqTrainingArguments.__init__).parameters:
+    training_kwargs["evaluation_strategy"] = "epoch"
+else:
+    training_kwargs["eval_strategy"] = "epoch"
+
+training_args = Seq2SeqTrainingArguments(**training_kwargs)
 
 # ======================================================
 # TRAINER

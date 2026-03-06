@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import inspect
 import torch
 from datasets import load_dataset
 from peft import LoraConfig, get_peft_model
@@ -140,7 +141,7 @@ data_collator = DataCollatorForSeq2Seq(
     padding=True,
 )
 
-args = Seq2SeqTrainingArguments(
+training_kwargs = dict(
     output_dir=os.path.join(PROJECT_ROOT, "checkpoints", "sft_runs_codet5"),
     num_train_epochs=EPOCHS,
     learning_rate=LR,
@@ -149,7 +150,6 @@ args = Seq2SeqTrainingArguments(
     gradient_accumulation_steps=GRAD_ACCUM,
     dataloader_num_workers=0,
     dataloader_pin_memory=False,
-    evaluation_strategy="epoch",
     save_strategy="epoch",
     save_total_limit=1,
     logging_steps=50,
@@ -158,6 +158,12 @@ args = Seq2SeqTrainingArguments(
     bf16=False,
     predict_with_generate=True,
 )
+if "evaluation_strategy" in inspect.signature(Seq2SeqTrainingArguments.__init__).parameters:
+    training_kwargs["evaluation_strategy"] = "epoch"
+else:
+    training_kwargs["eval_strategy"] = "epoch"
+
+args = Seq2SeqTrainingArguments(**training_kwargs)
 
 trainer = Seq2SeqTrainer(
     model=model,

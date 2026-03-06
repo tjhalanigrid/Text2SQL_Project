@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import inspect
 import torch
 from datasets import load_dataset
 from peft import LoraConfig, get_peft_model
@@ -145,7 +146,7 @@ data_collator = DataCollatorForSeq2Seq(
     padding=True,
 )
 
-args = Seq2SeqTrainingArguments(
+training_kwargs = dict(
     #  FIXED: Changed path to prevent mixing logs with your old CodeT5 logs
     output_dir=os.path.join(PROJECT_ROOT, "checkpoints", "sft_t5_runs"),
     num_train_epochs=EPOCHS,
@@ -155,17 +156,20 @@ args = Seq2SeqTrainingArguments(
     gradient_accumulation_steps=GRAD_ACCUM,
     dataloader_num_workers=0,
     dataloader_pin_memory=False,
-    evaluation_strategy="epoch",
-    
     #  FIXED: "no" completely stops intermediate saving! Only the final model will be saved.
-    save_strategy="no", 
-    
+    save_strategy="no",
     logging_steps=50,
     report_to=[],
     fp16=False,
     bf16=False,
     predict_with_generate=True,
 )
+if "evaluation_strategy" in inspect.signature(Seq2SeqTrainingArguments.__init__).parameters:
+    training_kwargs["evaluation_strategy"] = "epoch"
+else:
+    training_kwargs["eval_strategy"] = "epoch"
+
+args = Seq2SeqTrainingArguments(**training_kwargs)
 
 trainer = Seq2SeqTrainer(
     model=model,

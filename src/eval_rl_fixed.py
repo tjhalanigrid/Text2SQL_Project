@@ -7,6 +7,7 @@ import random
 import sqlite3
 import time
 import re
+import os
 from pathlib import Path
 
 import torch
@@ -97,7 +98,8 @@ def main():
 
     print(f"Loading Model: {args.adapter}...")
     base = AutoModelForSeq2SeqLM.from_pretrained(BASE_MODEL).to(device)
-    model = PeftModel.from_pretrained(base, str(adapter_dir)).to(device)
+    adapter_for_peft = os.path.relpath(adapter_dir, project_root)
+    model = PeftModel.from_pretrained(base, adapter_for_peft, local_files_only=True).to(device)
     model = model.merge_and_unload()
     model.eval()
 

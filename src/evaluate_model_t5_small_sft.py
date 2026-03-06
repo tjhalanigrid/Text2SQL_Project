@@ -6,6 +6,7 @@ import sys
 import argparse
 import re
 import sqlite3
+import os
 from pathlib import Path
 
 import torch
@@ -45,7 +46,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--adapter", type=str, default="checkpoints/sft_t5")
-    parser.add_argument("--num_samples", type=int, default=1000)
+    parser.add_argument("--num_samples", type=int, default=700)
     args = parser.parse_args()
 
     project_root = Path(__file__).resolve().parents[1]
@@ -72,7 +73,8 @@ def main():
     tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
     base = AutoModelForSeq2SeqLM.from_pretrained(BASE_MODEL).to(device)
 
-    model = PeftModel.from_pretrained(base, str(adapter_dir)).to(device)
+    adapter_for_peft = os.path.relpath(adapter_dir, project_root)
+    model = PeftModel.from_pretrained(base, adapter_for_peft, local_files_only=True).to(device)
     model = model.merge_and_unload()
     model.eval()
 

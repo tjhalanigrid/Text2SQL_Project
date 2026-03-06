@@ -1,5 +1,6 @@
 import json
 import sqlite3
+import os
 from pathlib import Path
 import torch
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
@@ -32,7 +33,8 @@ def load_model(adapter_path):
         tokenizer = AutoTokenizer.from_pretrained(base_name)
 
     base = AutoModelForSeq2SeqLM.from_pretrained(base_name).to(DEVICE)
-    model = PeftModel.from_pretrained(base, str(abs_path)).to(DEVICE)
+    adapter_for_peft = os.path.relpath(abs_path, PROJECT_ROOT)
+    model = PeftModel.from_pretrained(base, adapter_for_peft, local_files_only=True).to(DEVICE)
     model.eval()
 
     return tokenizer, model

@@ -6,6 +6,7 @@ import random
 import sqlite3
 import time
 import re
+import os
 import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
@@ -97,7 +98,8 @@ def main():
         tokenizer.pad_token = tokenizer.eos_token
 
     base = AutoModelForSeq2SeqLM.from_pretrained(args.base_model).to(device)
-    model = PeftModel.from_pretrained(base, str(adapter_dir)).to(device)
+    adapter_for_peft = os.path.relpath(adapter_dir, project_root)
+    model = PeftModel.from_pretrained(base, adapter_for_peft, local_files_only=True).to(device)
     model = model.merge_and_unload()
     model.eval()
 
