@@ -99,6 +99,193 @@ Text2SQL_Project
 
 ---
 
+## 🏗️ Installation & Setup
+
+### Prerequisites
+
+- Python 3.10+
+- macOS/Linux (MPS/CUDA/CPU supported via PyTorch setup)
+
+### Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### Activate venv (recommended)
+
+```bash
+source venv/bin/activate
+```
+
+## ⚡ Run On Another Computer (Quick Start)
+
+Use these exact commands on a fresh machine.
+
+### 1. Clone and enter project
+
+```bash
+git clone https://github.com/tjhalanigrid/Text2SQL_Project.git
+cd Text2SQL_Project
+```
+
+### 2. Create environment and install dependencies
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+### 3. Run UI directly (no retraining required)
+
+```bash
+python app.py
+```
+
+### 4. Rebuild and open analytics dashboard
+
+```bash
+python comparison_plots/parse_and_plot.py --window 7
+open docs/index.html
+```
+
+### Notes for new users
+
+- If adapter files are present in `checkpoints/best_rlhf_model`, UI runs with your tuned model.
+- If adapter is missing, update the adapter path in `app.py` or keep your local adapter in the same path.
+- Runtime artifacts are written under `outputs/` and `comparison_plots/`.
+
+---
+
+## ✅ Core Tasks
+
+🔹 **Task 1: Train and run Text-to-SQL inference**
+- Fine-tune SFT models and RLHF models.
+- Generate SQL from natural language questions for selected Spider databases.
+- Execute generated SQL safely and return result tables.
+
+🔹 **Task 2: Run controlled model comparisons**
+- Compare SFT vs RLHF checkpoints.
+- Compare model families (T5, BART, CodeT5) using the same evaluation flow.
+
+🔹 **Task 3: Evaluate quality with benchmark metrics**
+- Measure execution accuracy and exact match using Spider evaluation.
+- Track per-model performance and aggregate comparison artifacts.
+
+🔹 **Task 4: Presentation layer**
+- Launch interactive Gradio demo for natural language to SQL.
+- Regenerate plots and documentation visuals for reporting.
+
+---
+
+## 📊 Key Results Snapshot
+
+- Best model family in this project: **CodeT5-Base**.
+- Best reported SFT execution accuracy: **41.7%**.
+- Best reported RLHF execution accuracy: **37.9%**.
+- RLHF improved semantic behavior in manual checks while execution accuracy varied by model.
+
+---
+
+## 🏋️ Training & Inference
+
+### Train
+
+```bash
+python src/train_sft.py
+python src/train_sft_codet5.py
+python src/train_sft_bart.py
+python src/train_rl.py
+python src/train_rl_codet5.py
+python src/train_rl_bart.py
+```
+
+### Inference (example)
+
+```bash
+python src/generate_sql.py \
+  --question "Show the names of employees who live in Calgary" \
+  --db_id chinook_1
+```
+
+### Evaluate (example)
+
+```bash
+python src/evaluate_model_codet5.py --adapter checkpoints/sft_adapter_codet5
+python src/eval_rl_fixed.py --adapter checkpoints/best_rlhf_model
+```
+
+---
+
+## 🧪 Experiment Commands
+
+1. **SFT checkpoint evaluation (CodeT5)**
+```bash
+python src/evaluate_model_codet5.py --adapter checkpoints/sft_adapter_codet5
+```
+
+2. **RLHF checkpoint evaluation**
+```bash
+python src/eval_rl_fixed.py --adapter checkpoints/best_rlhf_model
+```
+
+3. **Combined metric evaluation (EM + EX)**
+```bash
+python src/eval_both_metrics.py --adapter checkpoints/best_rlhf_model
+```
+
+4. **Model comparison plot generation**
+```bash
+python comparison_plots/parse_and_plot.py --window 7
+```
+
+---
+
+## 🖥️ Gradio UI (Inference)
+
+Main UI file: `app.py`
+
+Launch locally:
+
+```bash
+python app.py
+```
+
+The UI supports:
+- Natural language question input
+- Database selection
+- Generated SQL display
+- Query execution and tabular results
+
+---
+
+## 📈 Plot Dashboard
+
+Generate/rebuild comparison plots:
+
+```bash
+python comparison_plots/parse_and_plot.py --window 7
+```
+
+Open report/dashboard:
+
+```bash
+open docs/index.html
+```
+
+---
+
+## 🎯 Recommended Production Config
+
+Use this for stable deployment:
+- model/adapter: `checkpoints/best_rlhf_model`
+- base model: `Salesforce/codet5-base`
+- decoding mode: deterministic (`do_sample=False`, beam search)
+- safety: SQL validation enabled in `src/sql_validator.py`
+
+---
+
 ##  Models Evaluated
 
 | Model | Pretraining Type | Parameters |
