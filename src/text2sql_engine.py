@@ -4,6 +4,7 @@ import sqlite3
 import torch
 import re
 import time
+import os
 from pathlib import Path
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from peft import PeftModel
@@ -40,6 +41,39 @@ def semantic_fix(question, sql):
 
 
 class Text2SQLEngine:
+    @staticmethod
+    def _resolve_adapter_path(adapter_path: str) -> Path:
+        """
+        Resolve adapter path with sensible fallbacks for local runs and cloned repos.
+        Priority:
+        1) TEXT2SQL_ADAPTER_PATH env var
+        2) provided adapter_path argument
+        3) checkpoints/best_rlhf_model
+        4) experiments/v1_codet5_rlhf/best_rlhf_model
+        """
+        candidates: list[Path] = []
+
+        env_path = os.environ.get("TEXT2SQL_ADAPTER_PATH")
+        if env_path:
+            p = Path(env_path)
+            candidates.append(p if p.is_absolute() else (PROJECT_ROOT / p))
+
+        p = Path(adapter_path)
+        candidates.append(p if p.is_absolute() else (PROJECT_ROOT / p))
+        candidates.append(PROJECT_ROOT / "checkpoints" / "best_rlhf_model")
+        candidates.append(PROJECT_ROOT / "experiments" / "v1_codet5_rlhf" / "best_rlhf_model")
+
+        for c in candidates:
+            c = c.resolve()
+            if c.is_dir() and (c / "adapter_config.json").exists():
+                return c
+
+        tried = "\n - " + "\n - ".join(str(c.resolve()) for c in candidates)
+        raise FileNotFoundError(
+            "Could not find a valid LoRA adapter directory. Expected adapter_config.json in one of these paths:"
+            f"{tried}\nSet TEXT2SQL_ADAPTER_PATH to your adapter directory if needed."
+        )
+
     def __init__(self,
                  adapter_path="checkpoints/best_rlhf_model",
                  base_model_name="Salesforce/codet5-base",
@@ -66,7 +100,7 @@ class Text2SQLEngine:
             print("✅ Base model ready\n")
             return
 
-        adapter_path = (PROJECT_ROOT / adapter_path).resolve()
+        adapter_path = self._resolve_adapter_path(adapter_path)
         
         print("Loading tokenizer and LoRA adapter...")
         try:
@@ -74,7 +108,7 @@ class Text2SQLEngine:
         except Exception:
             self.tokenizer = AutoTokenizer.from_pretrained(base_model_name)
 
-        self.model = PeftModel.from_pretrained(base, str(adapter_path)).to(self.device)
+        self.model = PeftModel.from_pretrained(base, str(adapter_path), local_files_only=True).to(self.device)
         self.model.eval()
         print("✅ RLHF model ready\n")
 
