@@ -255,20 +255,25 @@ python app.py
 
 ## ✅ Core Tasks
 
-🔹 **Task 1: Train and run Text-to-SQL inference**
+🔹 **Task 1: Data preparation**
+- Prepare Spider JSON and SQLite artifacts needed for training and evaluation.
+- Validate schema/database paths and ensure required DBs exist locally.
+- Build clean prompt-ready examples for SFT and RLHF pipelines.
+
+🔹 **Task 2: Train and run Text-to-SQL inference**
 - Fine-tune SFT models and RLHF models.
 - Generate SQL from natural language questions for selected Spider databases.
 - Execute generated SQL safely and return result tables.
 
-🔹 **Task 2: Run controlled model comparisons**
+🔹 **Task 3: Run controlled model comparisons**
 - Compare SFT vs RLHF checkpoints.
 - Compare model families (T5, BART, CodeT5) using the same evaluation flow.
 
-🔹 **Task 3: Evaluate quality with benchmark metrics**
+🔹 **Task 4: Evaluate quality with benchmark metrics**
 - Measure execution accuracy and exact match using Spider evaluation.
 - Track per-model performance and aggregate comparison artifacts.
 
-🔹 **Task 4: Presentation layer**
+🔹 **Task 5: Presentation layer**
 - Launch interactive Gradio demo for natural language to SQL.
 - Regenerate plots and documentation visuals for reporting.
 
