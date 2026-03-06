@@ -21,7 +21,7 @@ Multiple transformer architectures were evaluated to understand how **different 
 
 Try the interactive Text-to-SQL system here:
 
-🔗 **Gradio Demo**  
+ **Gradio Demo**  
 https://huggingface.co/spaces/tjhalanigrid/text2sql-demo
 
 The demo allows users to:
@@ -38,7 +38,7 @@ The demo allows users to:
 
 Full project report with architecture explanation, experiments, and evaluation results:
 
-🔗 https://tjhalanigrid.github.io/Text2SQL_Project/
+ https://tjhalanigrid.github.io/Text2SQL_Project/
 
 The report includes:
 
@@ -99,7 +99,7 @@ Text2SQL_Project
 
 ---
 
-## 🏗️ Installation & Setup
+##  Installation & Setup
 
 ### Prerequisites
 
