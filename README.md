@@ -141,6 +141,7 @@ python -m pip install -r requirment.txt
 ### 3. Run UI directly (no retraining required)
 
 ```bash
+export TEXT2SQL_ADAPTER_PATH=checkpoints/best_rlhf_model
 python app.py
 ```
 
@@ -167,6 +168,7 @@ open docs/index.html
 cd Text2SQL_Project
 git pull
 source venv/bin/activate
+export TEXT2SQL_ADAPTER_PATH=checkpoints/best_rlhf_model
 python app.py
 ```
 
@@ -181,8 +183,18 @@ python app.py
 2. Adapter path / `HFValidationError`
    Set adapter path explicitly:
    ```bash
-   export TEXT2SQL_ADAPTER_PATH=experiments/v1_codet5_rlhf/best_rlhf_model
+   export TEXT2SQL_ADAPTER_PATH=checkpoints/best_rlhf_model
    python app.py
+   ```
+3. `unable to open database file`
+   Ensure DB file exists for selected DB (example `chinook_1`):
+   ```bash
+   ls data/database/chinook_1/chinook_1.sqlite
+   ```
+4. LoRA not loading (`Can't find weights...adapter_model.bin`)
+   Verify adapter weights exist:
+   ```bash
+   ls checkpoints/best_rlhf_model/adapter_model.bin
    ```
 
 ---
