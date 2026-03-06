@@ -88,6 +88,8 @@ Text2SQL_Project
 │
 ├── spider_eval/              # Official Spider evaluation scripts
 │
+├── checkpoints/              # All models checkpoints 
+│
 ├── experiments/              # Best model checkpoints and experiment configurations
 │
 ├── scripts                   # for evaluation of final model              
@@ -382,21 +384,21 @@ Although RLHF slightly reduced execution accuracy in some cases, it improved **s
 ### Stage 1 — Supervised Fine-Tuning (SFT)
 
 Models are trained using **cross-entropy loss** against ground-truth SQL queries.
-
+<!-- 
 Run training:
 
 ```bash
 python src/train_sft.py
 python src/train_sft_codet5.py
 python src/train_sft_bart.py
-```
+``` -->
 
 ---
 
 ### Stage 2 — Reinforcement Learning (RLHF / PPO)
 
 The model is further optimized using **execution-based rewards**.
-
+<!-- 
 Reward logic:
 
 ```
@@ -410,14 +412,14 @@ Training scripts:
 python src/train_rl.py
 python src/train_rl_codet5.py
 python src/train_rl_bart.py
-```
+``` -->
 
 ---
 
 ##  Evaluation
 
 Evaluate execution accuracy using:
-
+<!-- 
 ```bash
 python src/evaluate_model_codet5.py \
 --adapter checkpoints/sft_adapter_codet5 
@@ -429,17 +431,17 @@ For RLHF models:
 ```bash
 python src/eval_rl_fixed.py \
 --adapter checkpoints/best_rlhf_model
-```
+``` -->
 
 ---
 
 ##  Visualization
 
 Generate training curves and comparisons:
-
+<!-- 
 ```bash
 python comparison_plots/parse_and_plot.py --window 7
-```
+``` -->
 
 Generated plots include:
 
