@@ -384,64 +384,27 @@ Although RLHF slightly reduced execution accuracy in some cases, it improved **s
 ### Stage 1 — Supervised Fine-Tuning (SFT)
 
 Models are trained using **cross-entropy loss** against ground-truth SQL queries.
-<!-- 
-Run training:
-
-```bash
-python src/train_sft.py
-python src/train_sft_codet5.py
-python src/train_sft_bart.py
-``` -->
 
 ---
 
 ### Stage 2 — Reinforcement Learning (RLHF / PPO)
 
 The model is further optimized using **execution-based rewards**.
-<!-- 
-Reward logic:
 
-```
-+1 if predicted SQL returns the same result as the ground truth query
-Penalty for invalid SQL
-```
-
-Training scripts:
-
-```bash
-python src/train_rl.py
-python src/train_rl_codet5.py
-python src/train_rl_bart.py
-``` -->
 
 ---
 
 ##  Evaluation
 
 Evaluate execution accuracy using:
-<!-- 
-```bash
-python src/evaluate_model_codet5.py \
---adapter checkpoints/sft_adapter_codet5 
 
-```
-
-For RLHF models:
-
-```bash
-python src/eval_rl_fixed.py \
---adapter checkpoints/best_rlhf_model
-``` -->
 
 ---
 
 ##  Visualization
 
 Generate training curves and comparisons:
-<!-- 
-```bash
-python comparison_plots/parse_and_plot.py --window 7
-``` -->
+
 
 Generated plots include:
 
