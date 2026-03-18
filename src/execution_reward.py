@@ -1,328 +1,512 @@
+
+
+# from __future__ import annotations
+
+# import hashlib
+# import os
+# import queue
+# import re
+# import sqlite3
+# import threading
+# import time
+# from concurrent.futures import ThreadPoolExecutor, as_completed
+# from dataclasses import dataclass
+# from typing import Dict, List, Optional, Sequence, Set, Tuple, Union
+
+# # --- CACHE CONTROL ---
+# USE_CACHE = True
+# _REWARD_CACHE: Dict[str, float] = {}
+
+# def set_use_cache(enabled: bool):
+#     """Dynamically toggle the reward cache for benchmarks."""
+#     global USE_CACHE
+#     USE_CACHE = enabled
+
+# def _normalize_sql(sql: str) -> str:
+#     if not isinstance(sql, str):
+#         return ""
+#     s = sql.strip()
+#     if s.startswith("```"):
+#         s = re.sub(r"^```[a-zA-Z0-9_+-]*\n?", "", s).strip()
+#         s = re.sub(r"\n?```$", "", s).strip()
+#     if s.lower().startswith("sql:"):
+#         s = s[4:].strip()
+#     if ";" in s:
+#         s = s.split(";", 1)[0].strip()
+#     return s
+
+# def _connect_readonly(db_path: str) -> sqlite3.Connection:
+#     uri = f"file:{os.path.abspath(db_path)}?mode=ro"
+#     conn = sqlite3.connect(uri, uri=True, check_same_thread=False)
+#     conn.execute("PRAGMA query_only = ON;")
+#     conn.execute("PRAGMA foreign_keys = ON;")
+#     return conn
+
+# DEFAULT_QUERY_TIMEOUT_S = 2.0
+
+# def _with_timeout(conn: sqlite3.Connection, timeout_s: float = DEFAULT_QUERY_TIMEOUT_S) -> None:
+#     start = time.monotonic()
+#     def _handler() -> int:
+#         return 1 if (time.monotonic() - start) > timeout_s else 0
+#     conn.set_progress_handler(_handler, 10_000)
+
+# def _list_tables(conn: sqlite3.Connection) -> List[str]:
+#     try:
+#         cur = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';")
+#         return [r[0] for r in cur.fetchall() if r and isinstance(r[0], str)]
+#     except sqlite3.Error:
+#         return []
+
+# def _contains_table_name(sql: str, table_names: Sequence[str]) -> bool:
+#     s = sql.lower()
+#     for t in table_names:
+#         tl = t.lower()
+#         if not tl:
+#             continue
+#         if re.search(rf"\b{re.escape(tl)}\b", s):
+#             return True
+#     return False
+
+# def _explain_query_plan(conn: sqlite3.Connection, sql: str) -> bool:
+#     try:
+#         _with_timeout(conn, timeout_s=DEFAULT_QUERY_TIMEOUT_S)
+#         conn.execute(f"EXPLAIN QUERY PLAN {sql}")
+#         return True
+#     except sqlite3.Error:
+#         return False
+
+# def _execute(conn: sqlite3.Connection, sql: str, max_rows: int = 1000) -> Tuple[bool, List[Tuple], Optional[str]]:
+#     try:
+#         _with_timeout(conn, timeout_s=DEFAULT_QUERY_TIMEOUT_S)
+#         cur = conn.execute(sql)
+#         rows = cur.fetchmany(max_rows)
+#         norm_rows = [tuple(r) for r in rows]
+#         return True, norm_rows, None
+#     except sqlite3.Error as e:
+#         return False, [], str(e)
+
+# _SQL_KEYWORDS_TO_IGNORE = {
+#     "select", "from", "where", "join", "inner", "left", "right", "full", "outer", 
+#     "on", "group", "by", "order", "limit", "having", "distinct", "union", "intersect", 
+#     "except", "as", "and", "or", "not", "in", "is", "null", "like", "between", "case", 
+#     "when", "then", "else", "end", "asc", "desc"
+# }
+
+# _SQL_FUNCTIONS_TO_IGNORE = {
+#     "count", "avg", "min", "max", "sum", "lower", "upper", "substr", "coalesce", 
+#     "round", "date", "datetime", "strftime"
+# }
+
+# # --- LIGHTWEIGHT PARSING ---
+# def is_valid_select(sql: str):
+#     sql = sql.strip().lower()
+#     return sql.startswith("select") or sql.startswith("with")
+
+# def extract_tables(sql: str) -> List[str]:
+#     sql = sql.lower()
+#     if "join" not in sql:
+#         tables = re.findall(r'from\s+(\w+)', sql)
+#         return list(set(tables))
+
+#     tables = re.findall(r'from\s+([a-zA-Z_][a-zA-Z0-9_]*)', sql)
+#     joins = re.findall(r'join\s+([a-zA-Z_][a-zA-Z0-9_]*)', sql)
+#     return list(set(tables + joins))
+
+# def extract_columns(sql: str) -> List[str]:
+#     sql = sql.lower()
+#     match = re.search(r'select\s+(.*?)\s+from', sql)
+#     if not match:
+#         return []
+#     cols = match.group(1)
+#     if cols.strip() == "*":
+#         return ["*"]
+#     return [c.strip() for c in cols.split(",")]
+
+# def _get_db_tables_and_columns(conn: sqlite3.Connection) -> Tuple[Set[str], Set[str]]:
+#     tables = set()
+#     columns = set()
+#     for t in _list_tables(conn):
+#         tl = t.lower()
+#         if not tl:
+#             continue
+#         tables.add(tl)
+#         try:
+#             cur = conn.execute(f'PRAGMA table_info("{t}")')
+#             for row in cur.fetchall():
+#                 if row and isinstance(row[1], str):
+#                     columns.add(row[1].lower())
+#         except sqlite3.Error:
+#             continue
+#     return tables, columns
+
+# def _safe_results_equal(a: List[Tuple], b: List[Tuple]) -> bool:
+#     return a == b
+
+# @dataclass
+# class RewardDebugStats:
+#     total: int = 0
+#     parsed_ok: int = 0
+#     table_match: int = 0
+#     column_match: int = 0
+#     executed_ok: int = 0
+#     exact_match: int = 0
+
+# _DEBUG = RewardDebugStats()
+
+# def reset_debug_metrics() -> None:
+#     global _DEBUG
+#     _DEBUG = RewardDebugStats()
+
+# def get_debug_metrics() -> dict:
+#     denom = max(_DEBUG.total, 1)
+#     return {
+#         "valid_sql_rate": _DEBUG.parsed_ok / denom,
+#         "table_match_rate": _DEBUG.table_match / denom,
+#         "column_match_rate": _DEBUG.column_match / denom,
+#         "execution_accuracy": _DEBUG.exact_match / denom,
+#     }
+
+# EXECUTION_ERROR = "EXECUTION_ERROR"
+
+# _RESULT_CACHE_LOCK = threading.Lock()
+# _RESULT_CACHE: "Dict[str, Union[List[Tuple], str]]" = {}
+# _RESULT_CACHE_MAX = 100_000
+
+# def clear_result_cache() -> None:
+#     """Clear both DB query cache and reward cache."""
+#     with _RESULT_CACHE_LOCK:
+#         _RESULT_CACHE.clear()
+#     _REWARD_CACHE.clear()
+
+# def _db_state_fingerprint(db_path: str) -> str:
+#     try:
+#         st = os.stat(db_path)
+#         return f"{st.st_mtime_ns}:{st.st_size}"
+#     except OSError:
+#         return "missing"
+
+# def _result_cache_key(db_path: str, sql: str) -> str:
+#     fp = _db_state_fingerprint(db_path)
+#     payload = f"{fp}\0{sql}".encode("utf-8", errors="ignore")
+#     return hashlib.sha256(payload).hexdigest()
+
+# class _ConnectionPool:
+#     def __init__(self, db_path: str, maxsize: int = 1) -> None:
+#         self.db_path = db_path
+#         self.pool = queue.LifoQueue(maxsize=maxsize)
+#         self.lock = threading.Lock()
+
+#     def acquire(self) -> sqlite3.Connection:
+#         try:
+#             return self.pool.get_nowait()
+#         except queue.Empty:
+#             with self.lock:
+#                 try:
+#                     return self.pool.get_nowait()
+#                 except queue.Empty:
+#                     return _connect_readonly(self.db_path)
+
+#     def release(self, conn: sqlite3.Connection) -> None:
+#         try:
+#             self.pool.put_nowait(conn)
+#         except queue.Full:
+#             try:
+#                 conn.close()
+#             except Exception:
+#                 pass
+
+# _POOL_LOCK = threading.Lock()
+# _POOLS: Dict[str, _ConnectionPool] = {}
+
+# def _get_pool(db_path: str) -> _ConnectionPool:
+#     with _POOL_LOCK:
+#         pool = _POOLS.get(db_path)
+#         if pool is None:
+#             pool = _ConnectionPool(db_path=db_path, maxsize=1)
+#             _POOLS[db_path] = pool
+#         return pool
+
+# class _PooledConnection:
+#     def __init__(self, db_path: str) -> None:
+#         self.db_path = db_path
+#         self.pool = _get_pool(db_path)
+#         self.conn: Optional[sqlite3.Connection] = None
+
+#     def __enter__(self) -> sqlite3.Connection:
+#         self.conn = self.pool.acquire()
+#         return self.conn
+
+#     def __exit__(self, exc_type, exc, tb) -> None:
+#         if self.conn is not None:
+#             self.pool.release(self.conn)
+#             self.conn = None
+
+# def _cache_get(key: str) -> Optional[Union[List[Tuple], str]]:
+#     with _RESULT_CACHE_LOCK:
+#         return _RESULT_CACHE.get(key)
+
+# def _cache_put(key: str, value: Union[List[Tuple], str]) -> None:
+#     with _RESULT_CACHE_LOCK:
+#         if len(_RESULT_CACHE) >= _RESULT_CACHE_MAX:
+#             _RESULT_CACHE.clear()
+#         _RESULT_CACHE[key] = value
+
+# def execute_sql(conn: sqlite3.Connection, sql: str, *, max_rows: int = 1000) -> Union[List[Tuple], str]:
+#     try:
+#         _with_timeout(conn, timeout_s=DEFAULT_QUERY_TIMEOUT_S)
+#         cur = conn.execute(sql)
+#         rows = cur.fetchmany(max_rows)
+#         return [tuple(r) for r in rows]
+#     except Exception:
+#         return EXECUTION_ERROR
+
+# def execute_sql_cached(db_path: str, sql: str, *, max_rows: int = 1000) -> Union[List[Tuple], str]:
+#     if not USE_CACHE:
+#         with _PooledConnection(db_path) as conn:
+#             return execute_sql(conn, sql, max_rows=max_rows)
+            
+#     key = _result_cache_key(db_path, sql)
+#     cached = _cache_get(key)
+#     if cached is not None:
+#         return cached
+#     with _PooledConnection(db_path) as conn:
+#         res = execute_sql(conn, sql, max_rows=max_rows)
+#     _cache_put(key, res)
+#     return res
+
+# def execution_reward_timed(
+#     pred_sql: str, db_path: str, gold_sql: str, *, measure_plan: bool = False,
+# ) -> Tuple[float, Dict[str, float]]:
+#     timings = {"parse_s": 0.0, "plan_s": 0.0, "exec_s": 0.0}
+#     t0 = time.perf_counter()
+#     sql = _normalize_sql(pred_sql)
+#     gold = _normalize_sql(gold_sql)
+
+#     if not is_valid_select(sql):
+#         timings["parse_s"] = time.perf_counter() - t0
+#         return 0.0, timings
+
+#     t1 = time.perf_counter()
+#     timings["parse_s"] = t1 - t0
+
+#     if measure_plan:
+#         with _PooledConnection(db_path) as conn:
+#             p0 = time.perf_counter()
+#             _explain_query_plan(conn, sql)
+#             _explain_query_plan(conn, gold)
+#             timings["plan_s"] = time.perf_counter() - p0
+
+#     e0 = time.perf_counter()
+#     pred_res = execute_sql_cached(db_path, sql)
+#     if pred_res == EXECUTION_ERROR:
+#         timings["exec_s"] = time.perf_counter() - e0
+#         return 0.0, timings
+#     gold_res = execute_sql_cached(db_path, gold)
+#     timings["exec_s"] = time.perf_counter() - e0
+#     if gold_res == EXECUTION_ERROR:
+#         return 0.0, timings
+
+#     reward = -0.2
+#     reward += 0.2
+#     if _safe_results_equal(pred_res, gold_res):
+#         return 1.0, timings
+#     return max(-1.0, min(1.0, reward)), timings
+
+# def execution_reward(pred_sql: str, db_path: str, gold_sql: str) -> float:
+#     try:
+#         sql = _normalize_sql(pred_sql)
+#         gold = _normalize_sql(gold_sql)
+
+#         if not is_valid_select(sql):
+#             return -1.0
+
+#         reward = -0.2
+
+#         pred_tables = set(extract_tables(sql))
+#         gold_tables = set(extract_tables(gold))
+
+#         if pred_tables == gold_tables and len(gold_tables) > 0:
+#             reward += 0.3
+
+#         pred_cols = set(extract_columns(sql))
+#         gold_cols = set(extract_columns(gold))
+
+#         if gold_cols:
+#             overlap = len(pred_cols & gold_cols) / len(gold_cols)
+#             reward += 0.3 * overlap
+
+#         pred_res = execute_sql_cached(db_path, sql)
+#         if pred_res == EXECUTION_ERROR:
+#             return 0.0
+#         reward += 0.2
+
+#         gold_res = execute_sql_cached(db_path, gold)
+#         if gold_res == EXECUTION_ERROR:
+#             return 0.0
+#         if _safe_results_equal(pred_res, gold_res):
+#             return 1.0
+
+#         return max(-1.0, min(1.0, reward))
+
+#     except Exception:
+#         return 0.0
+
+# def cached_execution_reward(pred_sql: str, db_path: str, gold_sql: str) -> float:
+#     if not USE_CACHE:
+#         return execution_reward(pred_sql, db_path, gold_sql)
+        
+#     key = f"{db_path}|{pred_sql}|{gold_sql}"
+#     if key not in _REWARD_CACHE:
+#         _REWARD_CACHE[key] = execution_reward(pred_sql, db_path, gold_sql)
+#     return _REWARD_CACHE[key]
+
+# def execution_reward_batch_sequential(rollouts: Sequence[Tuple[str, str, str]]) -> List[float]:
+#     return [cached_execution_reward(pred_sql, db_path, gold_sql) for pred_sql, db_path, gold_sql in rollouts]
+
+# def execution_reward_batch_parallel(rollouts: Sequence[Tuple[str, str, str]], *, max_workers: int = 20) -> List[float]:
+#     if not rollouts:
+#         return []
+        
+#     unique_dbs = {db_path for _, db_path, _ in rollouts}
+#     worker_count = max(1, min(max_workers, len(unique_dbs)))
+#     results: List[Optional[float]] = [None] * len(rollouts)
+    
+#     with ThreadPoolExecutor(max_workers=worker_count) as executor:
+#         futures = {
+#             executor.submit(cached_execution_reward, pred_sql, db_path, gold_sql): i
+#             for i, (pred_sql, db_path, gold_sql) in enumerate(rollouts)
+#         }
+#         for fut in as_completed(futures):
+#             idx = futures[fut]
+#             try:
+#                 results[idx] = float(fut.result())
+#             except Exception:
+#                 results[idx] = 0.0
+                
+#     return [r if r is not None else 0.0 for r in results]
 from __future__ import annotations
 
 import os
+import queue
 import re
 import sqlite3
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
-from typing import List, Optional, Sequence, Set, Tuple, Union
+from typing import Dict, List, Optional, Sequence, Set, Tuple, Union
 
-try:
-    import sqlparse
-    from sqlparse.sql import Function, Identifier, IdentifierList, Statement, Token, Where
-    from sqlparse.tokens import DML, Keyword, Name, Number, Punctuation, String, Whitespace
-except Exception:  # pragma: no cover
-    sqlparse = None  # type: ignore[assignment]
-    Statement = object  # type: ignore[misc,assignment]
-    Token = object  # type: ignore[misc,assignment]
+from src.sql_validator import validate_sql_schema
 
+# --- ADD THIS AT TOP ---
+USE_SCHEMA_VALIDATION = True  # 🔥 TOGGLE FOR TASK 3
+
+# --- CACHE CONTROL ---
+USE_CACHE = True
+_REWARD_CACHE: Dict[str, float] = {}
+
+def set_use_cache(enabled: bool):
+    """Dynamically toggle the reward cache for benchmarks."""
+    global USE_CACHE
+    USE_CACHE = enabled
 
 def _normalize_sql(sql: str) -> str:
     if not isinstance(sql, str):
         return ""
     s = sql.strip()
     if s.startswith("```"):
-        # Strip markdown fences if present.
         s = re.sub(r"^```[a-zA-Z0-9_+-]*\n?", "", s).strip()
         s = re.sub(r"\n?```$", "", s).strip()
     if s.lower().startswith("sql:"):
         s = s[4:].strip()
-    # Keep only the first statement to avoid accidental multi-statement execution.
     if ";" in s:
         s = s.split(";", 1)[0].strip()
     return s
 
-
 def _connect_readonly(db_path: str) -> sqlite3.Connection:
-    # Read-only prevents any accidental mutation during reward computation.
-    # Note: requires SQLite URI support (built-in).
     uri = f"file:{os.path.abspath(db_path)}?mode=ro"
     conn = sqlite3.connect(uri, uri=True, check_same_thread=False)
     conn.execute("PRAGMA query_only = ON;")
     conn.execute("PRAGMA foreign_keys = ON;")
     return conn
 
+DEFAULT_QUERY_TIMEOUT_S = 2.0
 
-def _with_timeout(conn: sqlite3.Connection, timeout_s: float = 1.0) -> None:
+def _with_timeout(conn: sqlite3.Connection, timeout_s: float = DEFAULT_QUERY_TIMEOUT_S) -> None:
     start = time.monotonic()
-
     def _handler() -> int:
         return 1 if (time.monotonic() - start) > timeout_s else 0
-
-    # Call handler every N VM opcodes.
     conn.set_progress_handler(_handler, 10_000)
-
-
-def _list_tables(conn: sqlite3.Connection) -> List[str]:
-    try:
-        cur = conn.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';"
-        )
-        return [r[0] for r in cur.fetchall() if r and isinstance(r[0], str)]
-    except sqlite3.Error:
-        return []
-
-
-def _contains_table_name(sql: str, table_names: Sequence[str]) -> bool:
-    s = sql.lower()
-    for t in table_names:
-        tl = t.lower()
-        if not tl:
-            continue
-        if re.search(rf"\b{re.escape(tl)}\b", s):
-            return True
-    return False
-
 
 def _explain_query_plan(conn: sqlite3.Connection, sql: str) -> bool:
     try:
-        _with_timeout(conn, timeout_s=1.0)
+        _with_timeout(conn, timeout_s=DEFAULT_QUERY_TIMEOUT_S)
         conn.execute(f"EXPLAIN QUERY PLAN {sql}")
         return True
     except sqlite3.Error:
         return False
 
-
-def _execute(conn: sqlite3.Connection, sql: str, max_rows: int = 1000) -> Tuple[bool, List[Tuple], Optional[str]]:
-    try:
-        _with_timeout(conn, timeout_s=1.0)
-        cur = conn.execute(sql)
-        rows = cur.fetchmany(max_rows)
-        # Normalize to plain tuples for deterministic comparison.
-        norm_rows = [tuple(r) for r in rows]
-        return True, norm_rows, None
-    except sqlite3.Error as e:
-        return False, [], str(e)
-
-
 _SQL_KEYWORDS_TO_IGNORE = {
-    "select",
-    "from",
-    "where",
-    "join",
-    "inner",
-    "left",
-    "right",
-    "full",
-    "outer",
-    "on",
-    "group",
-    "by",
-    "order",
-    "limit",
-    "having",
-    "distinct",
-    "union",
-    "intersect",
-    "except",
-    "as",
-    "and",
-    "or",
-    "not",
-    "in",
-    "is",
-    "null",
-    "like",
-    "between",
-    "case",
-    "when",
-    "then",
-    "else",
-    "end",
-    "asc",
-    "desc",
+    "select", "from", "where", "join", "inner", "left", "right", "full", "outer", 
+    "on", "group", "by", "order", "limit", "having", "distinct", "union", "intersect", 
+    "except", "as", "and", "or", "not", "in", "is", "null", "like", "between", "case", 
+    "when", "then", "else", "end", "asc", "desc"
 }
 
 _SQL_FUNCTIONS_TO_IGNORE = {
-    "count",
-    "avg",
-    "min",
-    "max",
-    "sum",
-    "lower",
-    "upper",
-    "substr",
-    "coalesce",
-    "round",
-    "date",
-    "datetime",
-    "strftime",
+    "count", "avg", "min", "max", "sum", "lower", "upper", "substr", "coalesce", 
+    "round", "date", "datetime", "strftime"
 }
 
+# --- LIGHTWEIGHT PARSING ---
+def is_valid_select(sql: str):
+    sql = sql.strip().lower()
+    return sql.startswith("select") or sql.startswith("with")
 
-def extract_tables(sql: str) -> Set[str]:
-    """
-    Best-effort table extraction from SQL using sqlparse.
-    Returns lowercase table names (unqualified).
-    """
-    sql = _normalize_sql(sql)
-    if not sql:
-        return set()
-    if sqlparse is None:
-        # Fallback: naive regex for FROM/JOIN.
-        found = set()
-        for m in re.finditer(r"\b(from|join)\s+([a-zA-Z_][\w$]*)", sql, flags=re.I):
-            found.add(m.group(2).lower())
-        return found
+def extract_tables(sql: str) -> List[str]:
+    sql = sql.lower()
+    if "join" not in sql:
+        tables = re.findall(r'from\s+(\w+)', sql)
+        return list(set(tables))
 
-    try:
-        statements = sqlparse.parse(sql)
-    except Exception:
-        return set()
+    tables = re.findall(r'from\s+([a-zA-Z_][a-zA-Z0-9_]*)', sql)
+    joins = re.findall(r'join\s+([a-zA-Z_][a-zA-Z0-9_]*)', sql)
+    return list(set(tables + joins))
 
-    tables: Set[str] = set()
-
-    def _add_identifier_as_table(ident: Identifier) -> None:
-        # Prefer real name over alias; strip any schema prefix.
-        name = ident.get_real_name() or ident.get_name()
-        if not name:
-            return
-        tables.add(name.lower())
-
-    for st in statements:
-        if not isinstance(st, Statement):
-            continue
-        seen_from = False
-        for tok in st.flatten():
-            if tok.ttype in Whitespace:
-                continue
-            if tok.ttype is Keyword and tok.value.upper() in {"FROM", "JOIN", "INNER JOIN", "LEFT JOIN", "RIGHT JOIN", "FULL JOIN"}:
-                seen_from = True
-                continue
-            if not seen_from:
-                continue
-
-            if isinstance(tok, Identifier):
-                _add_identifier_as_table(tok)
-                seen_from = False
-            elif tok.ttype is Name:
-                tables.add(tok.value.lower())
-                seen_from = False
-            elif tok.ttype is Keyword and tok.value.upper() in {"WHERE", "GROUP", "ORDER", "HAVING", "LIMIT"}:
-                seen_from = False
-
-    return tables
-
-
-def extract_columns(sql: str) -> Set[str]:
-    """
-    Best-effort column extraction from SQL using sqlparse.
-    Returns lowercase column names (unqualified).
-    """
-    sql = _normalize_sql(sql)
-    if not sql:
-        return set()
-    if sqlparse is None:
-        # Fallback: naive dotted identifiers and bare names after SELECT/WHERE/etc.
-        cols = set()
-        for m in re.finditer(r"\b([a-zA-Z_][\w$]*)\b", sql):
-            w = m.group(1).lower()
-            if w in _SQL_KEYWORDS_TO_IGNORE or w in _SQL_FUNCTIONS_TO_IGNORE:
-                continue
-            cols.add(w)
-        return cols
-
-    try:
-        statements = sqlparse.parse(sql)
-    except Exception:
-        return set()
-
-    cols: Set[str] = set()
-
-    def _maybe_add_col(name: Optional[str]) -> None:
-        if not name:
-            return
-        n = name.strip().strip('"').strip("'").lower()
-        if not n or n == "*":
-            return
-        if n in _SQL_KEYWORDS_TO_IGNORE or n in _SQL_FUNCTIONS_TO_IGNORE:
-            return
-        cols.add(n)
-
-    def _handle_identifier(ident: Identifier) -> None:
-        # If qualified (t.col), keep only col for overlap/hallucination checks.
-        _maybe_add_col(ident.get_real_name() or ident.get_name())
-
-    for st in statements:
-        if not isinstance(st, Statement):
-            continue
-        for tok in st.flatten():
-            # Skip whitespace/punctuation/string literals/numbers.
-            if getattr(tok, "ttype", None) in (Whitespace, Punctuation, String, Number):
-                continue
-
-            if isinstance(tok, Function):
-                fname = tok.get_name()
-                if fname:
-                    # Don't treat function name as a column.
-                    pass
-                continue
-
-            if isinstance(tok, IdentifierList):
-                for ident in tok.get_identifiers():
-                    if isinstance(ident, Identifier):
-                        _handle_identifier(ident)
-                continue
-
-            if isinstance(tok, Identifier):
-                _handle_identifier(tok)
-                continue
-
-            if getattr(tok, "ttype", None) is Name:
-                _maybe_add_col(tok.value)
-
-    return cols
-
-
-def _get_db_tables_and_columns(conn: sqlite3.Connection) -> Tuple[Set[str], Set[str]]:
-    """
-    Return (tables, columns) sets from SQLite schema; all lowercased.
-    Columns are returned as a global set (unqualified).
-    """
-    tables = set()
-    columns = set()
-    for t in _list_tables(conn):
-        tl = t.lower()
-        if not tl:
-            continue
-        tables.add(tl)
-        try:
-            cur = conn.execute(f'PRAGMA table_info("{t}")')
-            for row in cur.fetchall():
-                if row and isinstance(row[1], str):
-                    columns.add(row[1].lower())
-        except sqlite3.Error:
-            continue
-    return tables, columns
-
+def extract_columns(sql: str) -> List[str]:
+    sql = sql.lower()
+    match = re.search(r'select\s+(.*?)\s+from', sql)
+    if not match:
+        return []
+    cols = match.group(1)
+    if cols.strip() == "*":
+        return ["*"]
+    return [c.strip() for c in cols.split(",")]
 
 def _safe_results_equal(a: List[Tuple], b: List[Tuple]) -> bool:
-    # Deterministic comparison: compare exact row tuples in order.
     return a == b
-
 
 @dataclass
 class RewardDebugStats:
     total: int = 0
     parsed_ok: int = 0
+    schema_valid: int = 0
     table_match: int = 0
     column_match: int = 0
     executed_ok: int = 0
     exact_match: int = 0
 
-
 _DEBUG = RewardDebugStats()
-
 
 def reset_debug_metrics() -> None:
     global _DEBUG
     _DEBUG = RewardDebugStats()
 
-
 def get_debug_metrics() -> dict:
     denom = max(_DEBUG.total, 1)
     return {
         "valid_sql_rate": _DEBUG.parsed_ok / denom,
+        "constraint_satisfaction_rate": _DEBUG.schema_valid / denom,
         "table_match_rate": _DEBUG.table_match / denom,
         "column_match_rate": _DEBUG.column_match / denom,
         "execution_accuracy": _DEBUG.exact_match / denom,
@@ -330,80 +514,252 @@ def get_debug_metrics() -> dict:
 
 EXECUTION_ERROR = "EXECUTION_ERROR"
 
+_RESULT_CACHE_LOCK = threading.Lock()
+_RESULT_CACHE: "Dict[str, Union[List[Tuple], str]]" = {}
+_RESULT_CACHE_MAX = 100_000
+
+def clear_result_cache() -> None:
+    """Clear both DB query cache and reward cache."""
+    with _RESULT_CACHE_LOCK:
+        _RESULT_CACHE.clear()
+    _REWARD_CACHE.clear()
+
+def _db_state_fingerprint(db_path: str) -> str:
+    try:
+        st = os.stat(db_path)
+        return f"{st.st_mtime_ns}:{st.st_size}"
+    except OSError:
+        return "missing"
+
+def _result_cache_key(db_path: str, sql: str) -> str:
+    fp = _db_state_fingerprint(db_path)
+    # OPTIMIZATION: Removed slow cryptographic SHA-256 hash.
+    # Python dicts hash strings natively in C, which is blazing fast.
+    return f"{fp}|{sql}"
+
+class _ConnectionPool:
+    def __init__(self, db_path: str, maxsize: int = 1) -> None:
+        self.db_path = db_path
+        self.pool = queue.LifoQueue(maxsize=maxsize)
+        self.lock = threading.Lock()
+
+    def acquire(self) -> sqlite3.Connection:
+        try:
+            return self.pool.get_nowait()
+        except queue.Empty:
+            with self.lock:
+                try:
+                    return self.pool.get_nowait()
+                except queue.Empty:
+                    return _connect_readonly(self.db_path)
+
+    def release(self, conn: sqlite3.Connection) -> None:
+        try:
+            self.pool.put_nowait(conn)
+        except queue.Full:
+            try:
+                conn.close()
+            except Exception:
+                pass
+
+_POOL_LOCK = threading.Lock()
+_POOLS: Dict[str, _ConnectionPool] = {}
+
+def _get_pool(db_path: str) -> _ConnectionPool:
+    with _POOL_LOCK:
+        pool = _POOLS.get(db_path)
+        if pool is None:
+            pool = _ConnectionPool(db_path=db_path, maxsize=1)
+            _POOLS[db_path] = pool
+        return pool
+
+class _PooledConnection:
+    def __init__(self, db_path: str) -> None:
+        self.db_path = db_path
+        self.pool = _get_pool(db_path)
+        self.conn: Optional[sqlite3.Connection] = None
+
+    def __enter__(self) -> sqlite3.Connection:
+        self.conn = self.pool.acquire()
+        return self.conn
+
+    def __exit__(self, exc_type, exc, tb) -> None:
+        if self.conn is not None:
+            self.pool.release(self.conn)
+            self.conn = None
+
+def _cache_get(key: str) -> Optional[Union[List[Tuple], str]]:
+    with _RESULT_CACHE_LOCK:
+        return _RESULT_CACHE.get(key)
+
+def _cache_put(key: str, value: Union[List[Tuple], str]) -> None:
+    with _RESULT_CACHE_LOCK:
+        if len(_RESULT_CACHE) >= _RESULT_CACHE_MAX:
+            _RESULT_CACHE.clear()
+        _RESULT_CACHE[key] = value
 
 def execute_sql(conn: sqlite3.Connection, sql: str, *, max_rows: int = 1000) -> Union[List[Tuple], str]:
-    """
-    Execute SQL safely.
-
-    If sqlite raises ANY exception, return EXECUTION_ERROR (NOT empty list).
-    """
     try:
-        _with_timeout(conn, timeout_s=1.0)
+        _with_timeout(conn, timeout_s=DEFAULT_QUERY_TIMEOUT_S)
         cur = conn.execute(sql)
         rows = cur.fetchmany(max_rows)
         return [tuple(r) for r in rows]
     except Exception:
         return EXECUTION_ERROR
 
+def execute_sql_cached(db_path: str, sql: str, *, max_rows: int = 1000) -> Union[List[Tuple], str]:
+    if not USE_CACHE:
+        with _PooledConnection(db_path) as conn:
+            return execute_sql(conn, sql, max_rows=max_rows)
+            
+    key = _result_cache_key(db_path, sql)
+    cached = _cache_get(key)
+    if cached is not None:
+        return cached
+    with _PooledConnection(db_path) as conn:
+        res = execute_sql(conn, sql, max_rows=max_rows)
+    _cache_put(key, res)
+    return res
 
-def _sqlparse_valid_select(sql: str) -> bool:
-    """
-    Parse validation using sqlparse:
-      - parse() non-empty
-      - contains a SELECT statement
-    """
-    if sqlparse is None:
-        return False
-    try:
-        stmts = sqlparse.parse(sql)
-        if not stmts:
-            return False
-        for st in stmts:
-            try:
-                if hasattr(st, "get_type") and st.get_type() == "SELECT":
-                    return True
-            except Exception:
-                continue
-        return False
-    except Exception:
-        return False
+def execution_reward_timed(
+    pred_sql: str, db_path: str, gold_sql: str, *, measure_plan: bool = False,
+) -> Tuple[float, Dict[str, float]]:
+    timings = {"parse_s": 0.0, "plan_s": 0.0, "exec_s": 0.0}
+    t0 = time.perf_counter()
+    sql = _normalize_sql(pred_sql)
+    gold = _normalize_sql(gold_sql)
+
+    if not is_valid_select(sql):
+        timings["parse_s"] = time.perf_counter() - t0
+        return 0.0, timings
+
+    t1 = time.perf_counter()
+    timings["parse_s"] = t1 - t0
+
+    if USE_SCHEMA_VALIDATION:
+        ok, _msg = validate_sql_schema(sql, db_path)
+        if not ok:
+            return 0.0, timings
+
+    if measure_plan:
+        with _PooledConnection(db_path) as conn:
+            p0 = time.perf_counter()
+            _explain_query_plan(conn, sql)
+            _explain_query_plan(conn, gold)
+            timings["plan_s"] = time.perf_counter() - p0
+
+    e0 = time.perf_counter()
+    pred_res = execute_sql_cached(db_path, sql)
+    if pred_res == EXECUTION_ERROR:
+        timings["exec_s"] = time.perf_counter() - e0
+        return 0.0, timings
+    gold_res = execute_sql_cached(db_path, gold)
+    timings["exec_s"] = time.perf_counter() - e0
+    if gold_res == EXECUTION_ERROR:
+        return 0.0, timings
+
+    reward = -0.2
+    reward += 0.2
+    if _safe_results_equal(pred_res, gold_res):
+        return 1.0, timings
+    return max(-1.0, min(1.0, reward)), timings
 
 def execution_reward(pred_sql: str, db_path: str, gold_sql: str) -> float:
     try:
+        _DEBUG.total += 1
         sql = _normalize_sql(pred_sql)
         gold = _normalize_sql(gold_sql)
 
-        if not sql or "SELECT" not in sql.upper():
+        if not is_valid_select(sql):
             return -1.0
+        _DEBUG.parsed_ok += 1
 
-        if not _sqlparse_valid_select(sql):
-            return -1.0
+        if USE_SCHEMA_VALIDATION:
+            ok, _msg = validate_sql_schema(sql, db_path)
+            if not ok:
+                return 0.0
+            _DEBUG.schema_valid += 1
 
-        reward = -0.2  # valid SQL baseline
+        reward = -0.2
 
-        pred_tables = extract_tables(sql)
-        gold_tables = extract_tables(gold)
+        pred_tables = set(extract_tables(sql))
+        gold_tables = set(extract_tables(gold))
 
         if pred_tables == gold_tables and len(gold_tables) > 0:
             reward += 0.3
+            _DEBUG.table_match += 1
 
-        pred_cols = extract_columns(sql)
-        gold_cols = extract_columns(gold)
+        pred_cols = set(extract_columns(sql))
+        gold_cols = set(extract_columns(gold))
 
         if gold_cols:
             overlap = len(pred_cols & gold_cols) / len(gold_cols)
             reward += 0.3 * overlap
+            if overlap >= 0.999:
+                _DEBUG.column_match += 1
 
-        with _connect_readonly(db_path) as conn:
-            pred_res = execute_sql(conn, sql)
-            if pred_res != EXECUTION_ERROR:
-                reward += 0.2
+        pred_res = execute_sql_cached(db_path, sql)
+        if pred_res == EXECUTION_ERROR:
+            return 0.0
+        reward += 0.2
+        _DEBUG.executed_ok += 1
 
-            gold_res = execute_sql(conn, gold)
-            if pred_res != EXECUTION_ERROR and _safe_results_equal(pred_res, gold_res):
-                return 1.0
+        gold_res = execute_sql_cached(db_path, gold)
+        if gold_res == EXECUTION_ERROR:
+            return 0.0
+        if _safe_results_equal(pred_res, gold_res):
+            _DEBUG.exact_match += 1
+            return 1.0
 
         return max(-1.0, min(1.0, reward))
 
     except Exception:
-        return -1.0
+        return 0.0
+
+def cached_execution_reward(pred_sql: str, db_path: str, gold_sql: str) -> float:
+    if not USE_CACHE:
+        return execution_reward(pred_sql, db_path, gold_sql)
+        
+    key = f"{db_path}|{pred_sql}|{gold_sql}"
+    if key not in _REWARD_CACHE:
+        _REWARD_CACHE[key] = execution_reward(pred_sql, db_path, gold_sql)
+    return _REWARD_CACHE[key]
+
+def execution_reward_batch_sequential(rollouts: Sequence[Tuple[str, str, str]]) -> List[float]:
+    return [cached_execution_reward(pred_sql, db_path, gold_sql) for pred_sql, db_path, gold_sql in rollouts]
+
+def execution_reward_batch_parallel(rollouts: Sequence[Tuple[str, str, str]], *, max_workers: int = 20) -> List[float]:
+    if not rollouts:
+        return []
+        
+    # OPTIMIZATION: Group by Database to strictly eliminate connection pool lock contention.
+    db_to_rollouts = {}
+    for i, rollout in enumerate(rollouts):
+        db_path = rollout[1]
+        if db_path not in db_to_rollouts:
+            db_to_rollouts[db_path] = []
+        db_to_rollouts[db_path].append((i, rollout))
+        
+    worker_count = max(1, min(max_workers, len(db_to_rollouts)))
+    results: List[Optional[float]] = [None] * len(rollouts)
+    
+    # Process a chunk of queries entirely dedicated to ONE database
+    def process_db_chunk(chunk):
+        chunk_results = []
+        for idx, (pred_sql, db_path, gold_sql) in chunk:
+            res = cached_execution_reward(pred_sql, db_path, gold_sql)
+            chunk_results.append((idx, res))
+        return chunk_results
+    
+    with ThreadPoolExecutor(max_workers=worker_count) as executor:
+        # Submit exactly 1 job per database
+        futures = [executor.submit(process_db_chunk, chunk) for chunk in db_to_rollouts.values()]
+        
+        for fut in as_completed(futures):
+            try:
+                for idx, res in fut.result():
+                    results[idx] = float(res)
+            except Exception:
+                pass 
+                
+    return [r if r is not None else 0.0 for r in results]

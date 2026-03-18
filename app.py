@@ -1,195 +1,3 @@
-
-
-# """
-# GRADIO DEMO UI
-# NL → SQL → Result Table
-# """
-
-# import gradio as gr
-# import pandas as pd
-# import re
-# from src.text2sql_engine import get_engine
-
-# engine = get_engine()
-
-# # =========================
-# # SAMPLE QUESTIONS DATA
-# # =========================
-# # Tuple format: ("Question", "Database_ID")
-# SAMPLES = [
-#     ("Show 10 distinct employee first names.", "chinook_1"),
-#     ("Which artist has the most albums?", "chinook_1"),
-#     ("List all the tracks that belong to the 'Rock' genre.", "chinook_1"),
-#     ("What are the names of all the cities?", "flight_1"),
-#     ("Find the flight number and cost of the cheapest flight.", "flight_1"),
-#     ("List the airlines that fly out of New York.", "flight_1"),
-#     ("Which campus was opened between 1935 and 1939?", "csu_1"),
-    
-  
-#     ("Count the number of students in each department.", "college_2"),
-  
-#     ("List the names of all clubs.", "club_1"),
-#     ("How many members does each club have?", "club_1"),
-#     ("Show the names of all cinemas.", "cinema"),
-#     ("Which cinema has the most screens?", "cinema")
-    
-# ]
-
-# # Extract just the questions for the dropdown
-# SAMPLE_QUESTIONS = [q[0] for q in SAMPLES]
-
-# # =========================
-# # CORE FUNCTIONS
-# # =========================
-# def run_query(question, db_id):
-#     if not question.strip():
-#         return "", None, " Please enter a question."
-
-#     result = engine.ask(question, db_id)
-#     final_sql = result["sql"]
-
-#     # Error handling
-#     if result["error"]:
-#         return final_sql, None, f"❌ SQL Error:\n{result['error']}"
-
-#     #  UPGRADE 1: Elegant handling for ZERO ROWS (Null Result)
-#     if not result["rows"]:
-#         # Return an empty dataframe with headers if possible, instead of a broken table
-#         df = pd.DataFrame(columns=result.get("columns", []))
-#         explanation = "✅ Query executed successfully\n\nRows returned: 0\n\n Note: The query ran perfectly, but there are no matching records (null/empty result) in the database for this question."
-#         return final_sql, df, explanation
-
-#     # Convert to Pandas DataFrame for a beautiful UI table
-#     df = pd.DataFrame(result["rows"], columns=result["columns"])
-#     actual_rows = len(result["rows"])
-
-#     explanation = f"✅ Query executed successfully\n\nRows returned: {actual_rows}\n"
-
-#     #  UPGRADE 2: Check if they asked for a LIMIT, but got fewer rows
-#     limit_match = re.search(r'LIMIT\s+(\d+)', final_sql, re.IGNORECASE)
-#     if limit_match:
-#         requested_limit = int(limit_match.group(1))
-#         if actual_rows < requested_limit:
-#             explanation += f"\nℹ️ Note: The query allowed up to {requested_limit} results, but only found {actual_rows} matching records in the database.\n"
-
-#     explanation += """
-# This shows the model understood:
-# • Database schema
-# • Table relationships
-# • Query intent
-# """
-#     return final_sql, df, explanation
-
-# def load_sample(selected_question):
-#     """Automatically updates the textbox and database dropdown when a sample is picked."""
-#     if not selected_question:
-#         return gr.update(), gr.update()
-    
-#     # Find the matching database for the selected question
-#     db = next((db for q, db in SAMPLES if q == selected_question), "chinook_1")
-#     return gr.update(value=selected_question), gr.update(value=db)
-
-# def clear_inputs():
-#     """Resets the UI fields."""
-#     return gr.update(value=None), gr.update(value=""), gr.update(value="chinook_1"), "", None, ""
-
-# # =========================
-# # UI LAYOUT
-# # =========================
-# with gr.Blocks(theme=gr.themes.Soft(), title="Text-to-SQL RLHF") as demo:
-
-#     gr.Markdown(
-#         """
-#         #  Text-to-SQL using RLHF + Execution Reward
-#         Convert Natural Language to SQL, strictly validated and safely executed on local SQLite databases.
-#         """
-#     )
-
-#     # ===== TRAINED DATABASES =====
-#     DBS = sorted([
-#         "flight_1", "student_assessment", "store_1", "bike_1", "book_2", "chinook_1",
-#         "academic", "aircraft", "car_1", "cinema", "club_1", "csu_1",
-#         "college_1", "college_2", "company_1", "company_employee",
-#         "customer_complaints", "department_store", "employee_hire_evaluation",
-#         "museum_visit", "products_for_hire", "restaurant_1",
-#         "school_finance", "shop_membership", "small_bank_1",
-#         "soccer_1", "student_1", "tvshow", "voter_1", "world_1"
-#     ])
-
-#     with gr.Row():
-        
-#         # --- LEFT COLUMN (Inputs & Samples) ---
-#         with gr.Column(scale=1):
-#             gr.Markdown("### 1. Configuration & Input")
-            
-#             sample_dropdown = gr.Dropdown(
-#                 choices=SAMPLE_QUESTIONS,
-#                 label=" Quick Select a Sample Question",
-#                 info="Picking a question will automatically select the right database!"
-#             )
-
-#             gr.Markdown("---")
-            
-#             db_id = gr.Dropdown(
-#                 choices=DBS,
-#                 value="chinook_1",
-#                 label="Select Database",
-#                 interactive=True
-#             )
-
-#             question = gr.Textbox(
-#                 label="Ask a Question",
-#                 placeholder="Type your own question or select a sample above...",
-#                 lines=3
-#             )
-
-#             with gr.Row():
-#                 clear_btn = gr.Button("🗑️ Clear", variant="secondary")
-#                 run_btn = gr.Button(" Generate & Run SQL", variant="primary")
-
-#         # --- RIGHT COLUMN (Outputs) ---
-#         with gr.Column(scale=2):
-#             gr.Markdown("### 2. Execution Results")
-            
-#             final_sql = gr.Code(language="sql", label="Final Executed SQL")
-            
-#             result_table = gr.Dataframe(
-#                 label="Query Result Table",
-#                 interactive=False,
-#                 wrap=True
-#             )
-
-#             explanation = gr.Textbox(label="Execution Details", lines=6)
-
-#     # =========================
-#     # EVENT LISTENERS
-#     # =========================
-#     # When a sample question is selected from the dropdown, update the textbox and DB
-#     sample_dropdown.change(
-#         fn=load_sample,
-#         inputs=[sample_dropdown],
-#         outputs=[question, db_id]
-#     )
-
-#     # Run the query
-#     run_btn.click(
-#         fn=run_query,
-#         inputs=[question, db_id],
-#         outputs=[final_sql, result_table, explanation]
-#     )
-
-#     # Clear button action
-#     clear_btn.click(
-#         fn=clear_inputs,
-#         inputs=[],
-#         outputs=[sample_dropdown, question, db_id, final_sql, result_table, explanation]
-#     )
-
-# if __name__ == "__main__":
-#     demo.launch()
-
-
-
 """
 GRADIO DEMO UI
 NL → SQL → Result Table
@@ -202,14 +10,19 @@ import time
 import os
 from src.text2sql_engine import get_engine
 
-adapter_path = os.environ.get("TEXT2SQL_ADAPTER_PATH")
-base_model_name = os.environ.get("TEXT2SQL_BASE_MODEL")
+# Safe fallbacks for both the adapter path and base model
+fallback_adapter = "checkpoints/best_rlhf_model_2"
+if not os.path.exists(fallback_adapter):
+    fallback_adapter = "checkpoints/sft_adapter_codet5"
+
+adapter_path = os.environ.get("TEXT2SQL_ADAPTER_PATH", fallback_adapter)
+base_model_name = os.environ.get("TEXT2SQL_BASE_MODEL", "Salesforce/codet5-base")
 use_lora_env = os.environ.get("TEXT2SQL_USE_LORA", "true").strip().lower()
 use_lora = use_lora_env not in {"0", "false", "no"}
 
 print("Text2SQL startup config:")
-print(f"- TEXT2SQL_ADAPTER_PATH: {adapter_path or '(default/fallback)'}")
-print(f"- TEXT2SQL_BASE_MODEL: {base_model_name or '(default)'}")
+print(f"- TEXT2SQL_ADAPTER_PATH: {adapter_path}")
+print(f"- TEXT2SQL_BASE_MODEL: {base_model_name}")
 print(f"- TEXT2SQL_USE_LORA: {use_lora}")
 
 engine = get_engine(
@@ -242,6 +55,8 @@ SAMPLE_QUESTIONS = [q[0] for q in SAMPLES]
 # SQL EXPLAINER
 # =========================
 def explain_sql(sql):
+    if not sql:
+        return ""
     explanation = "This SQL query retrieves information from the database."
     sql_lower = sql.lower()
 
@@ -269,10 +84,10 @@ def run_query(method, sample_q, custom_q, db_id):
 
     # 2. Validate inputs before hitting the engine
     if not question or str(question).strip() == "":
-        return "", pd.DataFrame(), "⚠️ Please enter a question."
+        return "-- No input provided", pd.DataFrame(columns=["Warning"]), "⚠️ Please enter a question."
     
     if not db_id or str(db_id).strip() == "":
-        return "", pd.DataFrame(), "⚠️ Please select a database."
+        return "-- No database selected", pd.DataFrame(columns=["Warning"]), "⚠️ Please select a database."
 
     start_time = time.time()
 
@@ -280,9 +95,14 @@ def run_query(method, sample_q, custom_q, db_id):
     try:
         result = engine.ask(str(question), str(db_id))
     except Exception as e:
-        return "", pd.DataFrame(), f"❌ CRITICAL BACKEND CRASH:\n{str(e)}"
+        err_msg = str(e)
+        return f"-- ❌ BACKEND CRASH\n-- {err_msg}", pd.DataFrame(columns=["Error Status"]), f"❌ CRITICAL BACKEND CRASH:\n{err_msg}"
 
+    # Extract outputs safely
     final_sql = result.get("sql", "")
+    if not isinstance(final_sql, str):
+        final_sql = str(final_sql) if final_sql else ""
+        
     error_msg = result.get("error", None)
     rows = result.get("rows", [])
     cols = result.get("columns", [])
@@ -290,13 +110,20 @@ def run_query(method, sample_q, custom_q, db_id):
     end_time = time.time()
     latency = round(end_time - start_time, 3)
 
-    # 4. Handle SQL generation/execution errors
+    # 🔥 THE FIX 1: Handle block/error display clearly in the UI
     if error_msg:
-        return final_sql, pd.DataFrame(), f"❌ SQL Error:\n{error_msg}"
+        # If no SQL was generated (or it was blocked), show it clearly in the SQL code block
+        display_sql = final_sql if final_sql.strip() else f"-- ❌ EXECUTION BLOCKED\n-- The input was flagged or failed validation.\n-- Reason: {error_msg}"
+        
+        # 🔥 THE FIX 2: Explicitly set a column name to avoid Gradio showing 'undefined' headers
+        error_df = pd.DataFrame(columns=["Execution Notice"])
+        return display_sql, error_df, f"❌ Error Details:\n{error_msg}"
 
     # 5. Handle Zero Rows gracefully
     if not rows:
-        df = pd.DataFrame(columns=cols if cols else [])
+        # Safely handle empty columns to prevent 'undefined'
+        safe_cols = cols if (cols and len(cols) > 0) else ["Result"]
+        df = pd.DataFrame(columns=safe_cols)
         explanation = f"✅ Query executed successfully\n\nRows returned: 0\nExecution Time: {latency} sec\n\n{explain_sql(final_sql)}"
         return final_sql, df, explanation
 
@@ -394,7 +221,7 @@ with gr.Blocks(theme=gr.themes.Soft(), title="Text-to-SQL RLHF") as demo:
         "customer_complaints", "department_store", "employee_hire_evaluation",
         "museum_visit", "products_for_hire", "restaurant_1",
         "school_finance", "shop_membership", "small_bank_1",
-        "soccer_1", "student_1", "tvshow", "voter_1", "world_1"
+         "student_1", "tvshow", "voter_1", "world_1"
     ])
 
     with gr.Row():
@@ -458,7 +285,6 @@ with gr.Blocks(theme=gr.themes.Soft(), title="Text-to-SQL RLHF") as demo:
     # EVENT LISTENERS
     # =========================
     
-    # Updated to handle the new Markdown warning toggle
     input_method.change(
         fn=toggle_input_method, 
         inputs=[input_method, sample_dropdown], 
@@ -478,7 +304,6 @@ with gr.Blocks(theme=gr.themes.Soft(), title="Text-to-SQL RLHF") as demo:
     clear_btn.click(
         fn=clear_inputs,
         inputs=[],
-        # Output list matches the updated clear_inputs() return values
         outputs=[input_method, sample_dropdown, type_own_warning, custom_question, db_id, final_sql, result_table, explanation]
     )
 

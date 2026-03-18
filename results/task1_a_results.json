@@ -1,0 +1,12 @@
+{
+    "with_cache": {
+        "sequential_s": 0.4084007080018637,
+        "parallel_s": 0.08360470800107578,
+        "speedup": 4.884900835926711
+    },
+    "without_cache": {
+        "sequential_s": 0.788437041999714,
+        "parallel_s": 0.15985250000085216,
+        "speedup": 4.932278456674189
+    }
+}
