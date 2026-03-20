@@ -1,374 +1,422 @@
-import json
-import subprocess
-import sys
-import argparse
-import random
-import sqlite3
-import time
-import re
-import os
-from pathlib import Path
-
-import torch
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
-from peft import PeftModel
-
-from prompting import encode_prompt
-
-# -------------------------------
-# NORMALIZATION
-# -------------------------------
-def normalize_sql(sql):
-    sql = sql.replace('"', "'")
-    sql = re.sub(r"\s+", " ", sql)
-    return sql.strip().lower().rstrip(";")
-
-
-# -------------------------------
-# 🔥 SAFE RESULT NORMALIZATION (FIX)
-# -------------------------------
-def normalize_result(res):
-    try:
-        return sorted([str(r) for r in res])
-    except:
-        return []
-
-
-# -------------------------------
-# EXECUTION CHECK (FIXED)
-# -------------------------------
-def check_execution(pred_sql, gold_sql, db_path):
-    try:
-        conn = sqlite3.connect(db_path)
-        conn.text_factory = lambda b: b.decode(errors='ignore')
-
-        start_time = time.monotonic()
-
-        def timeout_handler():
-            return 1 if (time.monotonic() - start_time) > 2.0 else 0
-
-        conn.set_progress_handler(timeout_handler, 10000)
-
-        cursor = conn.cursor()
-
-        cursor.execute(pred_sql)
-        pred_res = cursor.fetchall()
-
-        cursor.execute(gold_sql)
-        gold_res = cursor.fetchall()
-
-        conn.close()
-
-        # 🔥 FIXED COMPARISON
-        return normalize_result(pred_res) == normalize_result(gold_res)
-
-    except Exception:
-        return False
-
-
-# -------------------------------
-# SPIDER PARSER
-# -------------------------------
-def _parse_spider_accuracy(stdout: str, metric_type: str):
-    for line in stdout.splitlines():
-        if metric_type == "exec" and line.strip().startswith("execution"):
-            try:
-                return float(line.split()[-1])
-            except:
-                pass
-        elif metric_type == "match" and line.strip().startswith("exact"):
-            try:
-                return float(line.split()[-1])
-            except:
-                pass
-    return None
-
-
-# -------------------------------
-# MAIN
-# -------------------------------
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--adapter", type=str, required=True)
-    parser.add_argument("--num_samples", type=int, default=700)
-    parser.add_argument("--shuffle_dev", action="store_true")
-    parser.add_argument("--shuffle_seed", type=int, default=42)
-    args = parser.parse_args()
-
-    project_root = Path(__file__).resolve().parents[1]
-    adapter_dir = project_root / args.adapter
-
-    db_root = project_root / "data" / "database"
-    table_json = project_root / "data" / "tables.json"
-    dev_json = project_root / "data" / "dev.json"
-
-    pred_path = project_root / "temp_predictions.txt"
-    temp_gold_path = project_root / "temp_gold.sql"
-
-    if not adapter_dir.exists():
-        raise FileNotFoundError(f"Missing adapter dir: {adapter_dir}")
-
-    device = "mps" if torch.backends.mps.is_available() else (
-        "cuda" if torch.cuda.is_available() else "cpu"
-    )
-    print(f"Using device: {device}")
-
-    BASE_MODEL = "Salesforce/codet5-base"
-    tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
-
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
-
-    print(f"\n📦 Loading Model: {args.adapter}")
-
-    base = AutoModelForSeq2SeqLM.from_pretrained(BASE_MODEL).to(device)
-
-    adapter_for_peft = os.path.relpath(adapter_dir, project_root)
-
-    model = PeftModel.from_pretrained(
-        base,
-        adapter_for_peft,
-        local_files_only=True
-    ).to(device)
-
-    model = model.merge_and_unload()
-    model.eval()
-
-    # -------------------------------
-    # LOAD DATA
-    # -------------------------------
-    with dev_json.open() as f:
-        dev = json.load(f)
-
-    if args.shuffle_dev:
-        rng = random.Random(args.shuffle_seed)
-        rng.shuffle(dev)
-
-    dev = dev[: args.num_samples]
-    total = len(dev)
-
-    gen_kwargs = dict(
-        max_new_tokens=160,
-        num_beams=8,
-        length_penalty=0.8,
-        do_sample=False,
-        early_stopping=True,
-        pad_token_id=tokenizer.pad_token_id,
-        eos_token_id=tokenizer.eos_token_id,
-    )
-
-    print(f"\n🚀 Evaluating {total} samples...\n")
-
-    em_correct = 0
-    ex_correct = 0
-
-    with pred_path.open("w") as out_pred, temp_gold_path.open("w") as out_gold, torch.no_grad():
-        for i, ex in enumerate(dev, start=1):
-
-            db_id = ex["db_id"]
-            question = ex["question"]
-            gold_query = ex["query"]
-            db_path = db_root / db_id / f"{db_id}.sqlite"
-
-            # -------------------------------
-            # GENERATE SQL
-            # -------------------------------
-            input_ids = encode_prompt(
-                tokenizer,
-                question,
-                db_id,
-                device=device,
-                max_input_tokens=512
-            )
-
-            input_ids = input_ids.unsqueeze(0).to(device)
-            attention_mask = (input_ids != tokenizer.pad_token_id).long().to(device)
-
-            outputs = model.generate(
-                input_ids=input_ids,
-                attention_mask=attention_mask,
-                **gen_kwargs
-            )
-
-            pred_sql = tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
-
-            # -------------------------------
-            # SAVE FOR SPIDER EVAL
-            # -------------------------------
-            out_pred.write(f"{pred_sql}\n")
-            out_gold.write(f"{gold_query}\t{db_id}\n")
-
-            # -------------------------------
-            # LIVE METRICS
-            # -------------------------------
-            if normalize_sql(pred_sql) == normalize_sql(gold_query):
-                em_correct += 1
-
-            if check_execution(pred_sql, gold_query, db_path):
-                ex_correct += 1
-
-            if i % 20 == 0 or i == total:
-                print(
-                    f"Progress: {i}/{total} | "
-                    f"EM: {(em_correct/i)*100:.2f}% | "
-                    f"EX: {(ex_correct/i)*100:.2f}%"
-                )
-
-    print("\n🚀 Running Official Spider Evaluation...\n")
-
-    eval_script = project_root / "spider_eval" / "evaluation.py"
-
-    # EXACT MATCH
-    cmd_match = [
-        sys.executable, str(eval_script),
-        "--gold", str(temp_gold_path),
-        "--pred", str(pred_path),
-        "--etype", "match",
-        "--db", str(db_root),
-        "--table", str(table_json),
-    ]
-
-    proc_match = subprocess.run(cmd_match, capture_output=True, text=True)
-    exact_acc = _parse_spider_accuracy(proc_match.stdout, "match")
-
-    # EXECUTION
-    cmd_exec = [
-        sys.executable, str(eval_script),
-        "--gold", str(temp_gold_path),
-        "--pred", str(pred_path),
-        "--etype", "exec",
-        "--db", str(db_root),
-        "--table", str(table_json),
-    ]
-
-    proc_exec = subprocess.run(cmd_exec, capture_output=True, text=True)
-    exec_acc = _parse_spider_accuracy(proc_exec.stdout, "exec")
-
-    print("==========================================")
-    print(f"🎯 OFFICIAL SPIDER RESULTS FOR: {args.adapter}")
-    print("==========================================")
-
-    print(f"Exact Match Accuracy  : {exact_acc*100:.2f}%" if exact_acc else "EM parsing failed")
-    print(f"Execution Accuracy    : {exec_acc*100:.2f}%" if exec_acc else "EX parsing failed")
-
-    print("==========================================\n")
-
-
-if __name__ == "__main__":
-    main()
-
-
-# from src.text2sql_engine import get_engine
-# import sqlite3
 # import json
-# import os
-# import re
+# import subprocess
+# import sys
+# import argparse
+# import random
+# import sqlite3
 # import time
+# import re
+# import os
+# from pathlib import Path
 
-# # ==========================================
-# # CONFIG
-# # ==========================================
-# DATA_PATH = "data/train_spider.json"
-# DB_ROOT = "data/database"
+# import torch
+# from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+# from peft import PeftModel
 
+# from prompting import encode_prompt
 
-# # ==========================================
-# # SQL NORMALIZATION
-# # ==========================================
+# # -------------------------------
+# # NORMALIZATION
+# # -------------------------------
 # def normalize_sql(sql):
 #     sql = sql.replace('"', "'")
 #     sql = re.sub(r"\s+", " ", sql)
 #     return sql.strip().lower().rstrip(";")
 
 
-# # ==========================================
-# # EXECUTION FUNCTION
-# # ==========================================
-# def execute_sql(db_path, sql):
+# # -------------------------------
+# # 🔥 SAFE RESULT NORMALIZATION (FIX)
+# # -------------------------------
+# def normalize_result(res):
+#     try:
+#         return sorted([str(r) for r in res])
+#     except:
+#         return []
+
+
+# # -------------------------------
+# # EXECUTION CHECK (FIXED)
+# # -------------------------------
+# def check_execution(pred_sql, gold_sql, db_path):
 #     try:
 #         conn = sqlite3.connect(db_path)
+#         conn.text_factory = lambda b: b.decode(errors='ignore')
 
-#         start = time.time()
-#         def timeout():
-#             return 1 if (time.time() - start) > 2 else 0
-#         conn.set_progress_handler(timeout, 10000)
+#         start_time = time.monotonic()
 
-#         cur = conn.cursor()
-#         cur.execute(sql)
-#         res = cur.fetchall()
+#         def timeout_handler():
+#             return 1 if (time.monotonic() - start_time) > 2.0 else 0
+
+#         conn.set_progress_handler(timeout_handler, 10000)
+
+#         cursor = conn.cursor()
+
+#         cursor.execute(pred_sql)
+#         pred_res = cursor.fetchall()
+
+#         cursor.execute(gold_sql)
+#         gold_res = cursor.fetchall()
+
 #         conn.close()
-#         return res
-#     except:
-#         return None
+
+#         # 🔥 FIXED COMPARISON
+#         return normalize_result(pred_res) == normalize_result(gold_res)
+
+#     except Exception:
+#         return False
 
 
-# # ==========================================
-# # EVALUATION FUNCTION
-# # ==========================================
-# def evaluate(engine, data):
-
-#     total = 0
-#     exact_match = 0
-#     execution_match = 0
-
-#     for i, item in enumerate(data, 1):
-
-#         question = item["question"]
-#         gold_sql = item["query"]
-#         db_id = item["db_id"]
-
-#         db_path = os.path.join(DB_ROOT, db_id, f"{db_id}.sqlite")
-
-#         result = engine.ask(question, db_id)
-#         pred_sql = result.get("sql", "")
-
-#         if not pred_sql:
-#             continue
-
-#         total += 1
-
-#         # ✅ EXACT MATCH
-#         if normalize_sql(pred_sql) == normalize_sql(gold_sql):
-#             exact_match += 1
-
-#         # ✅ EXECUTION MATCH
-#         pred_res = execute_sql(db_path, pred_sql)
-#         gold_res = execute_sql(db_path, gold_sql)
-
-#         if pred_res is not None and gold_res is not None:
-#             if sorted(pred_res) == sorted(gold_res):
-#                 execution_match += 1
-
-#         # 🔥 LIVE TRACKING
-#         if i % 20 == 0:
-#             print(f"Progress: {i}/{len(data)} | EM: {exact_match/i:.2f} | EX: {execution_match/i:.2f}")
-
-#     return {
-#         "exact_match": round(exact_match / total, 4) if total else 0,
-#         "execution_accuracy": round(execution_match / total, 4) if total else 0,
-#         "total": total
-#     }
+# # -------------------------------
+# # SPIDER PARSER
+# # -------------------------------
+# def _parse_spider_accuracy(stdout: str, metric_type: str):
+#     for line in stdout.splitlines():
+#         if metric_type == "exec" and line.strip().startswith("execution"):
+#             try:
+#                 return float(line.split()[-1])
+#             except:
+#                 pass
+#         elif metric_type == "match" and line.strip().startswith("exact"):
+#             try:
+#                 return float(line.split()[-1])
+#             except:
+#                 pass
+#     return None
 
 
-# # ==========================================
+# # -------------------------------
 # # MAIN
-# # ==========================================
-# if __name__ == "__main__":
+# # -------------------------------
+# def main():
+#     parser = argparse.ArgumentParser()
+#     parser.add_argument("--adapter", type=str, required=True)
+#     parser.add_argument("--num_samples", type=int, default=700)
+#     parser.add_argument("--shuffle_dev", action="store_true")
+#     parser.add_argument("--shuffle_seed", type=int, default=42)
+#     args = parser.parse_args()
 
-#     print("\n📥 Loading dataset...")
-#     data = json.load(open(DATA_PATH))[:300]   # 🔥 control size
+#     project_root = Path(__file__).resolve().parents[1]
+#     adapter_dir = project_root / args.adapter
 
-#     print("\n🚀 Running UNCONSTRAINED...\n")
-#     engine_base = get_engine(use_constrained=False)
-#     res_base = evaluate(engine_base, data)
+#     db_root = project_root / "data" / "database"
+#     table_json = project_root / "data" / "tables.json"
+#     dev_json = project_root / "data" / "dev.json"
 
-#     print("\n🚀 Running CONSTRAINED...\n")
-#     engine_const = get_engine(use_constrained=True)
-#     res_const = evaluate(engine_const, data)
+#     pred_path = project_root / "temp_predictions.txt"
+#     temp_gold_path = project_root / "temp_gold.sql"
 
-#     print("\n==========================================")
-#     print("🎯 FINAL SPIDER-STYLE COMPARISON")
+#     if not adapter_dir.exists():
+#         raise FileNotFoundError(f"Missing adapter dir: {adapter_dir}")
+
+#     device = "mps" if torch.backends.mps.is_available() else (
+#         "cuda" if torch.cuda.is_available() else "cpu"
+#     )
+#     print(f"Using device: {device}")
+
+#     BASE_MODEL = "Salesforce/codet5-base"
+#     tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
+
+#     if tokenizer.pad_token is None:
+#         tokenizer.pad_token = tokenizer.eos_token
+
+#     print(f"\n📦 Loading Model: {args.adapter}")
+
+#     base = AutoModelForSeq2SeqLM.from_pretrained(BASE_MODEL).to(device)
+
+#     adapter_for_peft = os.path.relpath(adapter_dir, project_root)
+
+#     model = PeftModel.from_pretrained(
+#         base,
+#         adapter_for_peft,
+#         local_files_only=True
+#     ).to(device)
+
+#     model = model.merge_and_unload()
+#     model.eval()
+
+#     # -------------------------------
+#     # LOAD DATA
+#     # -------------------------------
+#     with dev_json.open() as f:
+#         dev = json.load(f)
+
+#     if args.shuffle_dev:
+#         rng = random.Random(args.shuffle_seed)
+#         rng.shuffle(dev)
+
+#     dev = dev[: args.num_samples]
+#     total = len(dev)
+
+#     gen_kwargs = dict(
+#         max_new_tokens=160,
+#         num_beams=8,
+#         length_penalty=0.8,
+#         do_sample=False,
+#         early_stopping=True,
+#         pad_token_id=tokenizer.pad_token_id,
+#         eos_token_id=tokenizer.eos_token_id,
+#     )
+
+#     print(f"\n🚀 Evaluating {total} samples...\n")
+
+#     em_correct = 0
+#     ex_correct = 0
+
+#     with pred_path.open("w") as out_pred, temp_gold_path.open("w") as out_gold, torch.no_grad():
+#         for i, ex in enumerate(dev, start=1):
+
+#             db_id = ex["db_id"]
+#             question = ex["question"]
+#             gold_query = ex["query"]
+#             db_path = db_root / db_id / f"{db_id}.sqlite"
+
+#             # -------------------------------
+#             # GENERATE SQL
+#             # -------------------------------
+#             input_ids = encode_prompt(
+#                 tokenizer,
+#                 question,
+#                 db_id,
+#                 device=device,
+#                 max_input_tokens=512
+#             )
+
+#             input_ids = input_ids.unsqueeze(0).to(device)
+#             attention_mask = (input_ids != tokenizer.pad_token_id).long().to(device)
+
+#             outputs = model.generate(
+#                 input_ids=input_ids,
+#                 attention_mask=attention_mask,
+#                 **gen_kwargs
+#             )
+
+#             pred_sql = tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
+
+#             # -------------------------------
+#             # SAVE FOR SPIDER EVAL
+#             # -------------------------------
+#             out_pred.write(f"{pred_sql}\n")
+#             out_gold.write(f"{gold_query}\t{db_id}\n")
+
+#             # -------------------------------
+#             # LIVE METRICS
+#             # -------------------------------
+#             if normalize_sql(pred_sql) == normalize_sql(gold_query):
+#                 em_correct += 1
+
+#             if check_execution(pred_sql, gold_query, db_path):
+#                 ex_correct += 1
+
+#             if i % 20 == 0 or i == total:
+#                 print(
+#                     f"Progress: {i}/{total} | "
+#                     f"EM: {(em_correct/i)*100:.2f}% | "
+#                     f"EX: {(ex_correct/i)*100:.2f}%"
+#                 )
+
+#     print("\n🚀 Running Official Spider Evaluation...\n")
+
+#     eval_script = project_root / "spider_eval" / "evaluation.py"
+
+#     # EXACT MATCH
+#     cmd_match = [
+#         sys.executable, str(eval_script),
+#         "--gold", str(temp_gold_path),
+#         "--pred", str(pred_path),
+#         "--etype", "match",
+#         "--db", str(db_root),
+#         "--table", str(table_json),
+#     ]
+
+#     proc_match = subprocess.run(cmd_match, capture_output=True, text=True)
+#     exact_acc = _parse_spider_accuracy(proc_match.stdout, "match")
+
+#     # EXECUTION
+#     cmd_exec = [
+#         sys.executable, str(eval_script),
+#         "--gold", str(temp_gold_path),
+#         "--pred", str(pred_path),
+#         "--etype", "exec",
+#         "--db", str(db_root),
+#         "--table", str(table_json),
+#     ]
+
+#     proc_exec = subprocess.run(cmd_exec, capture_output=True, text=True)
+#     exec_acc = _parse_spider_accuracy(proc_exec.stdout, "exec")
+
 #     print("==========================================")
-#     print("Unconstrained:", res_base)
-#     print("Constrained  :", res_const)
+#     print(f"🎯 OFFICIAL SPIDER RESULTS FOR: {args.adapter}")
+#     print("==========================================")
+
+#     print(f"Exact Match Accuracy  : {exact_acc*100:.2f}%" if exact_acc else "EM parsing failed")
+#     print(f"Execution Accuracy    : {exec_acc*100:.2f}%" if exec_acc else "EX parsing failed")
+
 #     print("==========================================\n")
+
+
+# if __name__ == "__main__":
+#     main()
+
+import json
+import sqlite3
+import os
+import re
+import time
+import sys
+from pathlib import Path
+
+# Fix relative imports
+PROJECT_ROOT = Path(__file__).resolve().parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from src.text2sql_engine import get_engine
+
+
+# ==========================================
+# CONFIG
+# ==========================================
+DATA_PATH = "data/train_spider.json"
+DB_ROOT = "data/database"
+
+
+# ==========================================
+# SQL NORMALIZATION
+# ==========================================
+def normalize_sql(sql):
+    sql = sql.replace('"', "'")
+    sql = re.sub(r"\s+", " ", sql)
+    return sql.strip().lower().rstrip(";")
+
+
+# ==========================================
+# SAFE RESULT NORMALIZATION
+# ==========================================
+def normalize_result(res):
+    try:
+        return sorted([tuple(map(str, r)) for r in res])
+    except:
+        return []
+
+
+# ==========================================
+# EXECUTION FUNCTION
+# ==========================================
+def execute_sql(db_path, sql):
+    try:
+        conn = sqlite3.connect(db_path)
+
+        start = time.time()
+        def timeout():
+            return 1 if (time.time() - start) > 2 else 0
+        conn.set_progress_handler(timeout, 10000)
+
+        cur = conn.cursor()
+        cur.execute(sql)
+        res = cur.fetchall()
+        conn.close()
+        return res
+    except:
+        return None
+
+
+# ==========================================
+# EVALUATION FUNCTION (🔥 FIXED)
+# ==========================================
+def evaluate(engine, data):
+
+    total = 0
+    exact_match = 0
+    execution_match = 0
+    constraint_ok = 0
+
+    for i, item in enumerate(data, 1):
+
+        question = item["question"]
+        gold_sql = item["query"]
+        db_id = item["db_id"]
+
+        db_path = os.path.join(DB_ROOT, db_id, f"{db_id}.sqlite")
+
+        result = engine.ask(question, db_id)
+
+        # ✅ FIX: use engine output ONLY
+        pred_sql = result.get("sql", "")
+        is_valid = result.get("valid_schema", False)
+
+        if not pred_sql:
+            continue
+
+        total += 1
+
+        # ✅ constraint tracking (ONLY from engine)
+        if is_valid:
+            constraint_ok += 1
+
+        # ✅ Exact Match
+        if normalize_sql(pred_sql) == normalize_sql(gold_sql):
+            exact_match += 1
+
+        # ✅ Execution Match
+        pred_res = execute_sql(db_path, pred_sql)
+        gold_res = execute_sql(db_path, gold_sql)
+
+        if pred_res is not None and gold_res is not None:
+            if normalize_result(pred_res) == normalize_result(gold_res):
+                execution_match += 1
+
+        # 🔥 Progress
+        if i % 20 == 0:
+            print(
+                f"Progress: {i}/{len(data)} | "
+                f"EM: {exact_match/i:.2f} | "
+                f"EX: {execution_match/i:.2f} | "
+                f"Constraint: {constraint_ok/i:.2f}"
+            )
+
+    return {
+        "exact_match": round(exact_match / total, 4) if total else 0,
+        "execution_accuracy": round(execution_match / total, 4) if total else 0,
+        "constraint_rate": round(constraint_ok / total, 4) if total else 0,
+        "total": total
+    }
+
+
+# ==========================================
+# MAIN
+# ==========================================
+if __name__ == "__main__":
+
+    print("\n📥 Loading dataset...")
+    data = json.load(open(DATA_PATH))[:700]
+
+    # --------------------------------------
+    # 🔴 UNCONSTRAINED
+    # --------------------------------------
+    print("\n🚀 Running UNCONSTRAINED...\n")
+    engine_base = get_engine(use_constrained=False)
+    res_base = evaluate(engine_base, data)
+
+    # --------------------------------------
+    # 🟢 CONSTRAINED
+    # --------------------------------------
+    print("\n🚀 Running CONSTRAINED...\n")
+    engine_const = get_engine(use_constrained=True)
+    res_const = evaluate(engine_const, data)
+
+    # --------------------------------------
+    # FINAL OUTPUT
+    # --------------------------------------
+    print("\n==========================================")
+    print("🎯 FINAL SPIDER-STYLE COMPARISON (TASK 3)")
+    print("==========================================")
+
+    print(f"WITHOUT → EM: {res_base['exact_match']*100:.2f} | "
+          f"EX: {res_base['execution_accuracy']*100:.2f} | "
+          f"Constraint: {res_base['constraint_rate']*100:.2f}")
+
+    print(f"WITH    → EM: {res_const['exact_match']*100:.2f} | "
+          f"EX: {res_const['execution_accuracy']*100:.2f} | "
+          f"Constraint: {res_const['constraint_rate']*100:.2f}")
+
+    print("==========================================\n")

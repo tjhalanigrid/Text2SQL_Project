@@ -1,6 +1,4 @@
-# =========================================================
-# RLHF TRAINING FOR TEXT2SQL (STABLE PPO VERSION)
-# =========================================================
+
 import torch
 import torch.nn.functional as F
 from datasets import load_dataset
@@ -9,9 +7,13 @@ from transformers.generation.logits_process import LogitsProcessor, LogitsProces
 from trl import PPOTrainer, PPOConfig, AutoModelForSeq2SeqLMWithValueHead
 from peft import PeftModel
 import os, sys, sqlite3, re, random
+from tqdm import tqdm  # <-- Added tqdm for the progress bar
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from execution_reward import execution_reward, extract_tables, extract_columns
+# 🔥 IMPORT UPDATED TO MATCH OUR NEW FILE
+from constrained_decoding import SchemaConstraintGraph, SchemaConstrainedLogitsProcessor
+from sql_validator import validate_sql_schema
 try:
     import sqlparse  # gate PPO updates on parsable SQL only
 except Exception:  # pragma: no cover
@@ -34,6 +36,7 @@ SCHEMA_WARMUP_EPOCHS = 2
 MAX_SCHEMA_CHARS = 1500
 MAX_OUTPUT_TOKENS = 64     #  Speed up: Reduced max tokens
 ROLLOUTS_PER_EPOCH = 1024  
+USE_CONSTRAINED_DECODING = os.environ.get("CONSTRAINED_DECODING", "0") == "1"
 
 # ======================================================
 # PATHS
@@ -176,6 +179,7 @@ def get_db_path(db_id):
 
 # SPEED OPTIMIZATION: Cache schema so we don't spam disk IO
 _SCHEMA_CACHE = {}
+_GRAPH_CACHE = {} # 🔥 ADDED: Cache for our Constraint Graphs!
 
 def get_db_schema_cached(db_path):
     if db_path in _SCHEMA_CACHE:
@@ -198,6 +202,12 @@ def get_db_schema_cached(db_path):
         
     _SCHEMA_CACHE[db_path] = schema_text
     return schema_text
+
+def get_schema_graph_cached(db_path):
+    """Retrieves or builds the strict constraint graph for logits processor"""
+    if db_path not in _GRAPH_CACHE:
+        _GRAPH_CACHE[db_path] = SchemaConstraintGraph(db_path)
+    return _GRAPH_CACHE[db_path]
 
 # ======================================================
 # PROMPT
@@ -275,9 +285,17 @@ for epoch in range(1, NUM_EPOCHS + 1):
     epoch_reward_sum = 0
     valid_sql_count = 0
     total_seen = 0
+    constraint_ok_count = 0
+
+    # <-- ADDED TQDM HERE -->
+    step_iterator = tqdm(
+        range(0, ROLLOUTS_PER_EPOCH, ppo_config.batch_size), 
+        desc=f"Epoch {epoch}/{NUM_EPOCHS}", 
+        leave=True
+    )
 
     # Process in exact chunks matching batch_size to avoid buffer remnants
-    for step in range(0, ROLLOUTS_PER_EPOCH, ppo_config.batch_size):
+    for step in step_iterator:
         
         batch_prompts = []
         batch_meta = [] # Store tuple of (question, gold_sql, db_path, db_id)
@@ -309,12 +327,30 @@ for epoch in range(1, NUM_EPOCHS + 1):
         # TRL expects lists of 1D tensors
         query_tensors = [encoded_inputs.input_ids[i] for i in range(ppo_config.batch_size)]
 
-        #  SPEED OPTIMIZATION: Disable gradients for generation pass
+        # 🔥 CONSTRAINED DECODING INJECTION 🔥
         with torch.no_grad():
-            response_tensors = trainer.generate(
-                query_tensors,
-                **generation_kwargs
-            )
+            if USE_CONSTRAINED_DECODING:
+                response_tensors = []
+                # Generate item by item so we can apply the exact DB schema rules to each
+                for i in range(ppo_config.batch_size):
+                    db_path = batch_meta[i][2]
+                    schema_graph = get_schema_graph_cached(db_path)
+                    
+                    logits_processor = LogitsProcessorList([
+                        SchemaConstrainedLogitsProcessor(tokenizer, schema_graph)
+                    ])
+                    
+                    # Generate single rollout with DB-specific processor
+                    res = trainer.generate(
+                        [query_tensors[i]],
+                        logits_processor=logits_processor,
+                        **generation_kwargs
+                    )
+                    response_tensors.append(res[0])
+            else:
+                # Unconstrained: Process the whole batch natively
+                response_tensors = trainer.generate(query_tensors, **generation_kwargs)
+
 
         batch_rewards = []
         batch_responses_text = []
@@ -333,6 +369,9 @@ for epoch in range(1, NUM_EPOCHS + 1):
                 continue
 
             # ---------- EXECUTION REWARD ----------
+            ok, _msg = validate_sql_schema(response, db_path)
+            if ok:
+                constraint_ok_count += 1
             reward = execution_reward(response, db_path, gold_sql)
             if reward is None:
                 batch_rewards.append(torch.tensor(-1.0, dtype=torch.float32).to(device))
@@ -341,14 +380,14 @@ for epoch in range(1, NUM_EPOCHS + 1):
             reward = float(reward)
 
             # ---------- TABLE BONUS ----------
-            pred_tables = extract_tables(response)
-            gold_tables = extract_tables(gold_sql)
+            pred_tables = set(extract_tables(response))
+            gold_tables = set(extract_tables(gold_sql))
             if len(gold_tables) > 0:
                 reward += 0.25 * (len(pred_tables & gold_tables) / len(gold_tables))
 
             # ---------- COLUMN BONUS ----------
-            pred_cols = extract_columns(response)
-            gold_cols = extract_columns(gold_sql)
+            pred_cols = set(extract_columns(response))
+            gold_cols = set(extract_columns(gold_sql))
             if len(gold_cols) > 0:
                 reward += 0.15 * (len(pred_cols & gold_cols) / len(gold_cols))
 
@@ -358,6 +397,10 @@ for epoch in range(1, NUM_EPOCHS + 1):
             
             epoch_reward_sum += reward
             valid_sql_count += 1
+
+        # <-- ADDED LIVE PROGRESS BAR UPDATE HERE -->
+        current_avg = epoch_reward_sum / valid_sql_count if valid_sql_count > 0 else 0
+        step_iterator.set_postfix({"Avg Reward": f"{current_avg:.3f}", "Valid": f"{valid_sql_count}/{total_seen}"})
 
         # ---------- PPO UPDATE ----------
         try:
@@ -379,31 +422,36 @@ for epoch in range(1, NUM_EPOCHS + 1):
             # Saves ONLY the adapter, keeping disk usage tiny!
             model.save_pretrained(step_save_path)
             tokenizer.save_pretrained(step_save_path)
-            print(f"\n💾 [AUTO-SAVE] Checkpoint saved at PPO step {global_ppo_step} -> {step_save_path}")
+            # Use tqdm.write so it doesn't break the progress bar formatting
+            tqdm.write(f"\n💾 [AUTO-SAVE] Checkpoint saved at PPO step {global_ppo_step} -> {step_save_path}")
 
         # ---------- LOG ----------
         if step % (LOG_EVERY * ppo_config.batch_size) == 0 and valid_sql_count > 0:
-            print("\n---------------------------")
-            print(f"Epoch {epoch}/{NUM_EPOCHS} Step {step}/{ROLLOUTS_PER_EPOCH} | Global Update {global_ppo_step}")
-            print("Avg Reward:", round(epoch_reward_sum/valid_sql_count,3))
-            print("Valid SQL:", valid_sql_count,"/",total_seen)
+            # Use tqdm.write instead of print so the progress bar stays clean at the bottom
+            tqdm.write("\n---------------------------")
+            tqdm.write(f"Epoch {epoch}/{NUM_EPOCHS} Step {step}/{ROLLOUTS_PER_EPOCH} | Global Update {global_ppo_step}")
+            tqdm.write(f"Avg Reward: {round(epoch_reward_sum/valid_sql_count,3)}")
+            tqdm.write(f"Valid SQL: {valid_sql_count}/{total_seen}")
+            tqdm.write(f"Constraint OK: {constraint_ok_count}/{total_seen}")
+            if total_seen > 0:
+                tqdm.write(f"Constraint Satisfaction Rate: {round(constraint_ok_count/total_seen,3)}")
             
             # Print sample from latest batch
             sample_idx = random.randint(0, ppo_config.batch_size - 1)
-            print("DB:", batch_meta[sample_idx][3])
-            print("Q:", batch_meta[sample_idx][0])
-            print("SQL:", batch_responses_text[sample_idx])
-            print("Reward:", round(batch_rewards[sample_idx].item(), 3))
+            tqdm.write(f"DB: {batch_meta[sample_idx][3]}")
+            tqdm.write(f"Q: {batch_meta[sample_idx][0]}")
+            tqdm.write(f"SQL: {batch_responses_text[sample_idx]}")
+            tqdm.write(f"Reward: {round(batch_rewards[sample_idx].item(), 3)}")
 
     # ---------- SAVE BEST MODEL (INSIDE EPOCH) ----------
     avg_reward = epoch_reward_sum / max(valid_sql_count, 1)
 
     if avg_reward > best_reward:
         best_reward = avg_reward
-        save_path = os.path.join(PROJECT_ROOT, "checkpoints/best_rlhf_model")
+        save_path = os.path.join(PROJECT_ROOT, "checkpoints/best_rlhf_model_2")
         os.makedirs(save_path, exist_ok=True)
         
         model.save_pretrained(save_path)
         tokenizer.save_pretrained(save_path)
         
-        print(f"\n✅ Saved BEST RLHF model for Epoch {epoch} (reward {best_reward:.3f})")
+        tqdm.write(f"\n✅ Saved BEST RLHF model for Epoch {epoch} (reward {best_reward:.3f})")
