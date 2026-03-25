@@ -1,0 +1,22 @@
+{
+  "adapter": "checkpoints/best_rlhf_model_2",
+  "base_model": "Salesforce/codet5-base",
+  "n": 100,
+  "seed": 42,
+  "with_replacement": true,
+  "db_allow": null,
+  "gen": {
+    "num_beams": 4,
+    "max_new_tokens": 80,
+    "repetition_penalty": 1.2
+  },
+  "timeout_s": 2.0,
+  "results": {
+    "constrained": {
+      "n": 100,
+      "em": 0.0,
+      "ex": 0.0,
+      "constraint_rate": 0.0
+    }
+  }
+}

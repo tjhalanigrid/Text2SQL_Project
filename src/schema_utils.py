@@ -66,7 +66,6 @@
 #     return tables, columns
 
 
-
 import os
 import sqlite3
 import threading
@@ -76,7 +75,7 @@ from typing import Dict, List, Set, Tuple
 # ===============================
 # 🔥 SCHEMA TEXT (for prompting)
 # ===============================
-def get_schema(db_path):
+def get_schema(db_path: str) -> str:
     schema_map = get_table_to_columns(db_path)
     schema_text = ""
 
@@ -114,8 +113,7 @@ def _connect_readonly(db_path: str) -> sqlite3.Connection:
 # ===============================
 def get_table_to_columns(db_path: str) -> Dict[str, List[str]]:
     """
-    Return mapping of table -> column names for the SQLite DB.
-    Tables and columns are returned lowercased.
+    Return mapping of table -> column names (ONLY names, no types).
     """
     fp = _db_state_fingerprint(db_path)
 
@@ -142,11 +140,7 @@ def get_table_to_columns(db_path: str) -> Dict[str, List[str]]:
                 cols = []
                 for row in cur.fetchall():
                     col_name = row[1].lower()
-                    col_type = str(row[2]).lower()
-
-                    # include both name + type (stronger constraint)
                     cols.append(col_name)
-                    cols.append(col_type)
 
                 schema[table_l] = list(set(cols))  # remove duplicates
 
@@ -175,7 +169,7 @@ def get_db_tables_and_columns(db_path: str) -> Tuple[Set[str], Set[str]]:
 
 
 # ===============================
-# 🔥 NEW: FOREIGN KEYS (IMPORTANT)
+# 🔥 FOREIGN KEYS (IMPORTANT)
 # ===============================
 def get_foreign_keys(db_path: str) -> List[Tuple[str, str, str, str]]:
     """
@@ -198,8 +192,8 @@ def get_foreign_keys(db_path: str) -> List[Tuple[str, str, str, str]]:
                     fks.append((
                         table.lower(),
                         row[3].lower(),  # column
-                        row[2].lower(),  # ref table
-                        row[4].lower()   # ref column
+                        row[2].lower(),  # referenced table
+                        row[4].lower()   # referenced column
                     ))
 
             except sqlite3.Error:
@@ -213,7 +207,7 @@ def get_foreign_keys(db_path: str) -> List[Tuple[str, str, str, str]]:
 # ===============================
 def get_constraint_graph(db_path: str):
     """
-    Build full schema graph:
+    Build schema constraint graph:
     - tables
     - columns
     - foreign key relations

@@ -10,6 +10,9 @@ trl>=0.8.6
 safetensors>=0.4.0
 sentencepiece>=0.1.99
 
+# Quantization (optional; bitsandbytes requires CUDA, not CPU/MPS)
+bitsandbytes>=0.43.0; platform_system != "Darwin"
+
 # Data + utilities
 datasets>=2.18.0
 pandas>=2.0.0

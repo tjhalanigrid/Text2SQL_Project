@@ -34,7 +34,7 @@ The demo allows users to:
 
 ---
 
-##  Project Report
+##  Project Report 2
 
 Full project report with architecture explanation, experiments, and evaluation results:
 
@@ -51,6 +51,25 @@ The report includes:
 - Demo screenshots
 
 ---
+
+##  Project Report 3
+
+Full technical report covering optimization pipeline, reinforcement learning improvements, and deployment enhancements:
+
+👉 https://tjhalanigrid.github.io/text2sql_2/
+
+The report includes:
+
+- Parallel SQL execution optimization (5.6× speedup)
+- Execution error analysis and telemetry dashboard
+- Schema-aware constrained decoding
+- Hard vs soft reward comparison
+- Quantized inference benchmarking (INT8, mixed precision)
+- System-level performance improvements and analysis
+- End-to-end evaluation and insights
+
+---
+
 
 ##  Features
 

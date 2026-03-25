@@ -1,6 +1,9 @@
 
 
 import os
+# Ensure headless-safe matplotlib + writable cache when called from Gradio/subprocess.
+os.environ.setdefault("MPLBACKEND", "Agg")
+os.environ.setdefault("MPLCONFIGDIR", os.environ.get("MPLCONFIGDIR", "/tmp/mplconfig"))
 import time
 import json
 import argparse
@@ -15,20 +18,22 @@ sys.path.append(PROJECT_ROOT)
 from src.execution_reward import (
     execution_reward_batch_sequential,
     execution_reward_batch_parallel,
+    execution_reward_batch_parallel_by_db,
     execution_reward_timed,
     set_use_cache,
+    set_use_schema_validation,
     clear_result_cache
 )
 
-def generate_mock_rollouts(num_rollouts: int = 100):
+def generate_mock_rollouts(num_rollouts: int = 100, heavy_n: int = 500_000):
     """Generates heavy queries across multiple databases to properly test true concurrency."""
-    print(f"\nGenerating {num_rollouts} heavy rollouts to simulate RLHF query workload...")
+    print(f"\nGenerating {num_rollouts} heavy rollouts to simulate RLHF query workload...", flush=True)
     
     real_dbs = glob.glob("data/database/*/*.sqlite")
     if real_dbs:
-        print(f"Found {len(real_dbs)} real SQLite databases. Distributing workload...")
+        print(f"Found {len(real_dbs)} real SQLite databases. Distributing workload...", flush=True)
     else:
-        print("No real databases found. Using simulated paths.")
+        print("No real databases found. Using simulated paths.", flush=True)
         
     rollouts = []
     for i in range(num_rollouts):
@@ -37,20 +42,23 @@ def generate_mock_rollouts(num_rollouts: int = 100):
         else:
             db_path = f"data/database/db_{i % 20}/db_{i % 20}.sqlite"
             
+        # Heavy deterministic CPU-ish query (may be cut off by the 2s timeout depending on machine).
         heavy_sql = f"""
         WITH RECURSIVE cnt(x) AS (
             SELECT 1
             UNION ALL
-            SELECT x+1 FROM cnt WHERE x < {50000 + (i % 1000)}
+            SELECT x+1 FROM cnt WHERE x < {heavy_n + (i % 10_000)}
         )
         SELECT sum(x) FROM cnt;
         """
         clean_sql = heavy_sql.replace("\n", " ").strip()
         rollouts.append((clean_sql, db_path, clean_sql))
+        if num_rollouts >= 500 and (i + 1) % 250 == 0:
+            print(f"  generated {i + 1}/{num_rollouts}...", flush=True)
         
     return rollouts
 
-def profile_bottlenecks(rollouts):
+def profile_bottlenecks(rollouts, sample_size: int = 20, print_every: int = 5):
     """Profiles CPU usage to identify time spent in parsing, planning, and execution."""
     print("\n" + "="*65)
     print(" 🔍 CPU PROFILING: IDENTIFYING BOTTLENECKS (100 Rollouts)")
@@ -58,20 +66,23 @@ def profile_bottlenecks(rollouts):
     
     clear_result_cache()
     set_use_cache(False) # Disable cache to force real work
+    set_use_schema_validation(False)  # CTE-heavy benchmark queries may fail schema validation
     
     total_parse = 0.0
     total_plan = 0.0
     total_exec = 0.0
     
-    # Profile just the first 100 to get an accurate average without waiting forever
-    sample_size = min(100, len(rollouts))
+    # Profile a small subset by default so the script prints quickly.
+    sample_size = min(int(sample_size), len(rollouts))
     sample_rollouts = rollouts[:sample_size]
     
-    for pred, db, gold in sample_rollouts:
+    for i, (pred, db, gold) in enumerate(sample_rollouts, 1):
         _, timings = execution_reward_timed(pred, db, gold, measure_plan=True)
         total_parse += timings['parse_s']
         total_plan += timings['plan_s']
         total_exec += timings['exec_s']
+        if print_every and (i % int(print_every) == 0 or i == sample_size):
+            print(f"  profiled {i}/{sample_size}...", flush=True)
         
     total_time = total_parse + total_plan + total_exec
     if total_time == 0: total_time = 0.0001 # Prevent div by zero
@@ -85,6 +96,7 @@ def profile_bottlenecks(rollouts):
 
 def run_benchmark_for_setting(rollouts, use_cache: bool, max_workers: int):
     set_use_cache(use_cache)
+    set_use_schema_validation(False)  # benchmark focuses on execution speed
     
     # Sequential
     clear_result_cache()
@@ -95,7 +107,8 @@ def run_benchmark_for_setting(rollouts, use_cache: bool, max_workers: int):
     # Parallel
     clear_result_cache()
     start_time = time.perf_counter()
-    execution_reward_batch_parallel(rollouts, max_workers=max_workers)
+    # 1 thread per DB (recommended)
+    execution_reward_batch_parallel_by_db(rollouts, max_workers=max_workers)
     parallel_s = time.perf_counter() - start_time
 
     speedup = sequential_s / parallel_s if parallel_s > 0 else 0
@@ -146,14 +159,18 @@ def main():
     parser = argparse.ArgumentParser(description="Benchmark SQL Execution Reward")
     parser.add_argument("--n", type=int, default=1000, help="Number of rollouts to benchmark")
     parser.add_argument("--max-workers", type=int, default=20, help="Max workers for parallel execution")
+    parser.add_argument("--heavy-n", type=int, default=200_000, help="Recursive CTE upper bound (controls heaviness)")
+    parser.add_argument("--skip-profile", action="store_true", help="Skip the CPU profiling section for faster startup")
+    parser.add_argument("--profile-n", type=int, default=20, help="Number of rollouts to use for CPU profiling")
     args = parser.parse_args()
 
     os.makedirs("results", exist_ok=True)
 
-    rollouts = generate_mock_rollouts(args.n)
+    rollouts = generate_mock_rollouts(args.n, heavy_n=args.heavy_n)
     
     # NEW: Fulfills Requirement 6
-    profile_bottlenecks(rollouts)
+    if not args.skip_profile:
+        profile_bottlenecks(rollouts, sample_size=args.profile_n)
     
     print("Starting Main Scalability Benchmarks...")
 

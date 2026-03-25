@@ -12,6 +12,7 @@ import os, sys, sqlite3, re, random
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from execution_reward import execution_reward, extract_tables, extract_columns
+from execution_reward import execution_reward_batch_parallel_by_db
 try:
     import sqlparse  # gate PPO updates on parsable SQL only
 except Exception:  # pragma: no cover
@@ -34,6 +35,7 @@ SCHEMA_WARMUP_EPOCHS = 2
 MAX_SCHEMA_CHARS = 1500
 MAX_OUTPUT_TOKENS = 64     #  Speed up: Reduced max tokens
 ROLLOUTS_PER_EPOCH = 1024  
+REWARD_MAX_WORKERS = int(os.environ.get("REWARD_MAX_WORKERS", "20"))
 
 # ======================================================
 # PATHS
@@ -319,45 +321,49 @@ for epoch in range(1, NUM_EPOCHS + 1):
         batch_rewards = []
         batch_responses_text = []
 
-        #  BATCH SQL REWARD EXECUTION (Strictly CPU strings)
+        base_rewards = [None] * ppo_config.batch_size
+        bonuses = [0.0 for _ in range(ppo_config.batch_size)]
+        needs_exec = []
+        hard_rollouts = []
+
+        #  Fast pass: collect rollouts for parallel-by-DB execution reward
         for i in range(ppo_config.batch_size):
             response = tokenizer.decode(response_tensors[i], skip_special_tokens=True)
             batch_responses_text.append(response)
             question, gold_sql, db_path, db_id = batch_meta[i]
-            
             total_seen += 1
 
-            # ---------- BASIC SQL FILTER ----------
             if "select" not in response.lower():
-                batch_rewards.append(torch.tensor(-1.0, dtype=torch.float32).to(device))
+                base_rewards[i] = -1.0
                 continue
 
-            # ---------- EXECUTION REWARD ----------
-            reward = execution_reward(response, db_path, gold_sql)
-            if reward is None:
-                batch_rewards.append(torch.tensor(-1.0, dtype=torch.float32).to(device))
-                continue
+            base_rewards[i] = None
+            needs_exec.append(i)
+            hard_rollouts.append((response, db_path, gold_sql))
 
-            reward = float(reward)
-
-            # ---------- TABLE BONUS ----------
-            pred_tables = extract_tables(response)
-            gold_tables = extract_tables(gold_sql)
+            pred_tables = set(extract_tables(response))
+            gold_tables = set(extract_tables(gold_sql))
             if len(gold_tables) > 0:
-                reward += 0.25 * (len(pred_tables & gold_tables) / len(gold_tables))
+                bonuses[i] += 0.25 * (len(pred_tables & gold_tables) / len(gold_tables))
 
-            # ---------- COLUMN BONUS ----------
-            pred_cols = extract_columns(response)
-            gold_cols = extract_columns(gold_sql)
+            pred_cols = set(extract_columns(response))
+            gold_cols = set(extract_columns(gold_sql))
             if len(gold_cols) > 0:
-                reward += 0.15 * (len(pred_cols & gold_cols) / len(gold_cols))
+                bonuses[i] += 0.15 * (len(pred_cols & gold_cols) / len(gold_cols))
 
-            # ---------- CLAMP ----------
-            reward = max(-1.0, min(1.0, reward))
+        if hard_rollouts:
+            vals = execution_reward_batch_parallel_by_db(hard_rollouts, max_workers=REWARD_MAX_WORKERS)
+            for local_idx, r in zip(needs_exec, vals):
+                base_rewards[local_idx] = float(r)
+
+        # Compose final rewards
+        for i in range(ppo_config.batch_size):
+            base = float(base_rewards[i] if base_rewards[i] is not None else -1.0)
+            reward = max(-1.0, min(1.0, base + bonuses[i]))
             batch_rewards.append(torch.tensor(reward, dtype=torch.float32).to(device))
-            
-            epoch_reward_sum += reward
-            valid_sql_count += 1
+            if base > -0.99:  # exclude hard-filtered invalid outputs from avg stats
+                epoch_reward_sum += reward
+                valid_sql_count += 1
 
         # ---------- PPO UPDATE ----------
         try:

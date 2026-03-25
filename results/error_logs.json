@@ -1,0 +1,1171 @@
+[
+  {
+    "question": "List all singer names in concerts in year 2014.",
+    "sql": "select name from singer_in_concert where year  =  2014",
+    "error": "no such column: name",
+    "error_type": "wrong_column",
+    "timestamp": 1774362608.913992
+  },
+  {
+    "question": "Find the first name of students who have both cat and dog pets .",
+    "sql": "SELECT * FROM has_pet join pets on has_pet.petid  =  pets.petid join student on has_pet.stuid  =  student.stuid where has_pet.pettype  =  \"cat\" intersect SELECT * FROM has_pet join pets on has_pet.petid  =  pets.petid where pets.pet_age  =  \"dog\"",
+    "error": "no such column: has_pet.pettype",
+    "error_type": "wrong_column",
+    "timestamp": 1774362631.9784698
+  },
+  {
+    "question": "What are the students' first names who have both cats and dogs as pets?",
+    "sql": "SELECT * FROM student join has_pet on student.stuid  =  has_pet.stuid join pets on has_pet.petid  =  pets.petid where has_pet.pettype  =  \"cats\" intersect SELECT * FROM student join has_pet on has_pet.stuid  =  has_pet.stuid where has_pet.pettype  =  \"dogs\"",
+    "error": "no such column: has_pet.pettype",
+    "error_type": "wrong_column",
+    "timestamp": 1774362634.1728158
+  },
+  {
+    "question": "What major is every student who does not own a cat as a pet, and also how old are they?",
+    "sql": "select major from student where stuid not in (select stuid from has_pet where pettype  =  \"cat as a pet\")",
+    "error": "no such column: pettype",
+    "error_type": "wrong_column",
+    "timestamp": 1774362635.760412
+  },
+  {
+    "question": "Find the id of students who do not have a cat pet.",
+    "sql": "select stuid from student where stuid not in (select stuid from has_pet where pettype  =  'cat')",
+    "error": "no such column: pettype",
+    "error_type": "wrong_column",
+    "timestamp": 1774362636.53943
+  },
+  {
+    "question": "Find the first name and age of students who have a dog but do not have a cat as a pet.",
+    "sql": "SELECT * FROM has_pet join student on has_pet.stuid  =  student.stuid where has_pet.pettype  =  'dog' except SELECT * FROM has_pet join pets on has_pet.petid  =  pets.petid where has_pet.pettype  =  'cat'",
+    "error": "no such column: has_pet.pettype",
+    "error_type": "wrong_column",
+    "timestamp": 1774362639.1414552
+  },
+  {
+    "question": "What is the last name of the student who has a cat that is 3 years old?",
+    "sql": "SELECT * FROM student join has_pet on student.stuid  =  has_pet.stuid where has_pet.pet_age  =  3",
+    "error": "no such column: has_pet.pet_age",
+    "error_type": "wrong_column",
+    "timestamp": 1774362655.083158
+  },
+  {
+    "question": "Which model of the car has the minimum horsepower?",
+    "sql": "select model from model_list order by horsepower desc limit 1",
+    "error": "no such column: horsepower",
+    "error_type": "wrong_column",
+    "timestamp": 1774362663.9275641
+  },
+  {
+    "question": "What is the model of the car with the smallest amount of horsepower?",
+    "sql": "select model from model_list order by horsepower desc limit 1",
+    "error": "no such column: horsepower",
+    "error_type": "wrong_column",
+    "timestamp": 1774362664.650323
+  },
+  {
+    "question": "Find the model of the car whose weight is below the average weight.",
+    "sql": "select model from model_list where weight  >  (select avg(weight) from car_names)",
+    "error": "no such column: weight",
+    "error_type": "wrong_column",
+    "timestamp": 1774362665.229163
+  },
+  {
+    "question": "What is the model for the car with a weight smaller than the average?",
+    "sql": "select model from model_list where weight  <  (select avg(weight) from car_names)",
+    "error": "no such column: weight",
+    "error_type": "wrong_column",
+    "timestamp": 1774362665.835584
+  },
+  {
+    "question": "What is the name of the different car makers who produced a car in 1970?",
+    "sql": "SELECT * FROM car_makers join car_names on car_makers.id  =  car_names.make where car_names.year  =  1970",
+    "error": "no such column: car_names.year",
+    "error_type": "wrong_column",
+    "timestamp": 1774362668.5956302
+  },
+  {
+    "question": "Which distinct car models are the produced after 1980?",
+    "sql": "select distinct model from model_list where year  >  1980",
+    "error": "no such column: year",
+    "error_type": "wrong_column",
+    "timestamp": 1774362672.288824
+  },
+  {
+    "question": "What is the name of the country with the most car makers?",
+    "sql": "select countryname from car_makers group by country order by count(*) desc limit 1",
+    "error": "no such column: countryname",
+    "error_type": "wrong_column",
+    "timestamp": 1774362676.1584482
+  },
+  {
+    "question": "What is the smallest weight of the car produced with 8 cylinders on 1974 ?",
+    "sql": "select min(weight) from car_data where cylinders  =  8 and year  =  1974",
+    "error": "no such table: car_data",
+    "error_type": "wrong_table",
+    "timestamp": 1774362685.3759181
+  },
+  {
+    "question": "What is the maximum horsepower and the make of the car models with 3 cylinders?",
+    "sql": "select max(horsepower),  max(make) from model_list where cylinders  =  3",
+    "error": "no such column: horsepower",
+    "error_type": "wrong_column",
+    "timestamp": 1774362693.47121
+  },
+  {
+    "question": "What is the largest amount of horsepower for the models with 3 cylinders and what make is it?",
+    "sql": "select max(horsepower),  maker from model_list group by maker order by count(*) desc limit 3",
+    "error": "no such column: horsepower",
+    "error_type": "wrong_column",
+    "timestamp": 1774362694.446395
+  },
+  {
+    "question": "What is the average edispl of the cars of model volvo?",
+    "sql": "select avg(eddispl) from cars_data where model  =  'volvo'",
+    "error": "no such column: eddispl",
+    "error_type": "wrong_column",
+    "timestamp": 1774362698.4912262
+  },
+  {
+    "question": "What is the average edispl for all volvos?",
+    "sql": "select avg(eddispl) from car_data where maker  =  'volvos'",
+    "error": "no such table: car_data",
+    "error_type": "wrong_table",
+    "timestamp": 1774362699.026708
+  },
+  {
+    "question": "Which distinctive models are produced by maker with the full name General Motors or weighing more than 3500?",
+    "sql": "SELECT * FROM model_list join car_makers on model_list.maker  =  car_makers.id where car_makers.fullname  =  \"general motors\" or car_names.weight  >  3500",
+    "error": "no such column: car_names.weight",
+    "error_type": "wrong_column",
+    "timestamp": 1774362712.3385012
+  },
+  {
+    "question": "What are the different models created by either the car maker General Motors or weighed more than 3500?",
+    "sql": "select distinct model from model_list where maker  =  'general motors' or weight  >  3500",
+    "error": "no such column: weight",
+    "error_type": "wrong_column",
+    "timestamp": 1774362713.25758
+  },
+  {
+    "question": "Among the cars that do not have the minimum horsepower , what are the make ids and names of all those with less than 4 cylinders ?",
+    "sql": "SELECT * FROM car_names join car_data on car_names.make  =  car_data.make where car_data.cylinders  <  4",
+    "error": "no such table: car_data",
+    "error_type": "wrong_table",
+    "timestamp": 1774362728.0286982
+  },
+  {
+    "question": "What is the maximum miles per gallon of the car with 8 cylinders or produced before 1980 ?",
+    "sql": "select max(mg) from car_makers where cylinders  =  8 or year  <  1980",
+    "error": "no such column: mg",
+    "error_type": "wrong_column",
+    "timestamp": 1774362728.655998
+  },
+  {
+    "question": "What are the id and names of the countries which have more than 3 car makers or produce the 'fiat' model?",
+    "sql": "SELECT * FROM car_makers join country_names on car_makers.id  =  country_names.country where car_names.model  =  'fiat' group by country_names.country",
+    "error": "no such table: country_names",
+    "error_type": "wrong_table",
+    "timestamp": 1774362737.810716
+  },
+  {
+    "question": "What are the ids and names of all countries that either have more than 3 car makers or produce fiat model ?",
+    "sql": "SELECT * FROM car_makers join country_names on car_makers.id  =  country_names.country where model_list.model  =  'fiat' group by country_names.country",
+    "error": "no such table: country_names",
+    "error_type": "wrong_table",
+    "timestamp": 1774362739.178472
+  },
+  {
+    "question": "How many flights depart from City 'Aberdeen' and have destination City 'Ashley'?",
+    "sql": "SELECT * FROM flights join airports on flights.airport  =  airports.country where airports.city  =  'alberdeen' and airports.city  =  'alshley'",
+    "error": "no such column: flights.airport",
+    "error_type": "wrong_column",
+    "timestamp": 1774362767.103094
+  },
+  {
+    "question": "Count the number of United Airlines flights arriving in ASY Airport.",
+    "sql": "SELECT * FROM flights join airlines on flights.airline  =  airlines.uid join airports on airlines.uid  =  airports.uid where airports.country  =  \"usa\"",
+    "error": "no such column: airports.uid",
+    "error_type": "wrong_column",
+    "timestamp": 1774362773.1261911
+  },
+  {
+    "question": "Find all airlines that have flights from both airports 'APG' and 'CVO'.",
+    "sql": "SELECT * FROM airlines join flights on airlines.uid  =  flights.sourceairport where airports.country  =  'apg' intersect SELECT * FROM airports join flights on airports.country  =  flights.destairport where airports.country  =  'cvo'",
+    "error": "no such column: airports.country",
+    "error_type": "wrong_column",
+    "timestamp": 1774362794.004808
+  },
+  {
+    "question": "Which airlines have departing flights from both APG and CVO airports?",
+    "sql": "SELECT * FROM airlines join flights on airlines.uid  =  flights.airline where airports.city  =  \"apg\" intersect SELECT * FROM airlines join airports on airlines.uid  =  airports.uid where airports.city  =  \"cyv\"",
+    "error": "no such column: airports.uid",
+    "error_type": "wrong_column",
+    "timestamp": 1774362795.519468
+  },
+  {
+    "question": "Find the number of flights landing in the city of Aberdeen or Abilene.",
+    "sql": "select count(*) from flights where city  =  \"aberdeen\" or city  =  \"abilene\"",
+    "error": "no such column: city",
+    "error_type": "wrong_column",
+    "timestamp": 1774362808.63888
+  },
+  {
+    "question": "Count the number of documents that use the PPT template type.",
+    "sql": "select count(*) from documents where template_type_code  =  'ppt'",
+    "error": "no such column: template_type_code",
+    "error_type": "wrong_column",
+    "timestamp": 1774362861.499996
+  },
+  {
+    "question": "What is the template type code of the template used by document with the name \"Data base\"?",
+    "sql": "SELECT * FROM documents join ref_template_types on documents.template_id  =  ref_template_types.template_id where documents.document_name  =  \"data base\"",
+    "error": "no such column: ref_template_types.template_id",
+    "error_type": "wrong_column",
+    "timestamp": 1774362897.4377742
+  },
+  {
+    "question": "Return the template type code of the template that is used by a document named Data base.",
+    "sql": "SELECT * FROM documents join ref_template_types on documents.template_id  =  ref_template_types.template_id where documents.document_name  =  \"data base\"",
+    "error": "no such column: ref_template_types.template_id",
+    "error_type": "wrong_column",
+    "timestamp": 1774362898.867332
+  },
+  {
+    "question": "What are the different template type codes, and how many documents use each type?",
+    "sql": "select template_type_code,  count(*) from documents group by template_type_code",
+    "error": "no such column: template_type_code",
+    "error_type": "wrong_column",
+    "timestamp": 1774362903.323431
+  },
+  {
+    "question": "List the names of all winners who played in both 2013 and 2016.",
+    "sql": "select winner_name from players where year  =  2013 intersect select winner_name from players where year  =  2016",
+    "error": "no such column: winner_name",
+    "error_type": "wrong_column",
+    "timestamp": 1774363015.6848419
+  },
+  {
+    "question": "What are the names of players who won in both 2013 and 2016?",
+    "sql": "select first_name from players where year  =  2013 intersect select first_name from players where year  =  2016",
+    "error": "no such column: year",
+    "error_type": "wrong_column",
+    "timestamp": 1774363016.502269
+  },
+  {
+    "question": "What are the country code and first name of the players who won in both tourney WTA Championships and Australian Open?",
+    "sql": "SELECT * FROM players as t1 join matches as t2 on t1.player_id  =  t2.player_id where t2.tourney_level  =  'wa championships' intersect SELECT * FROM players as t1 join matches as t2 on t1.player_id  =  t2.player_id where t2.tourney_level  =  'australian open'",
+    "error": "no such column: t2.player_id",
+    "error_type": "wrong_column",
+    "timestamp": 1774363021.459718
+  },
+  {
+    "question": "Find the first name and country code of the oldest player.",
+    "sql": "select first_name,  country_code from players order by year desc limit 1",
+    "error": "no such column: year",
+    "error_type": "wrong_column",
+    "timestamp": 1774363023.503989
+  },
+  {
+    "question": "What is the first name and country code of the oldest player?",
+    "sql": "select first_name,  country_code from players order by year desc limit 1",
+    "error": "no such column: year",
+    "error_type": "wrong_column",
+    "timestamp": 1774363024.126517
+  },
+  {
+    "question": "What is the name of the winner with the most rank points who participated in the Australian Open tournament?",
+    "sql": "select winner_name from rankings where ranking_points  =  'australian open tournament' group by winner_name order by count(*) desc limit 1",
+    "error": "no such column: winner_name",
+    "error_type": "wrong_column",
+    "timestamp": 1774363038.337591
+  },
+  {
+    "question": "Find the first name, country code and birth date of the winner who has the highest rank points in all matches.",
+    "sql": "SELECT * FROM matches join players on matches.player_id  =  players.player_id group by players.player_id order by count(*) desc limit 1",
+    "error": "no such column: matches.player_id",
+    "error_type": "wrong_column",
+    "timestamp": 1774363062.268217
+  },
+  {
+    "question": "What is the first name, country code, and birth date of the player with the most winner rank points across all matches?",
+    "sql": "SELECT * FROM players join matches on players.player_id  =  matches.player_id group by players.player_id order by count(*) desc limit 1",
+    "error": "no such column: matches.player_id",
+    "error_type": "wrong_column",
+    "timestamp": 1774363063.4014919
+  },
+  {
+    "question": "What is maximum and minimum death toll caused each time?",
+    "sql": "select max(tonnage),  min(tonnage) from death",
+    "error": "no such column: tonnage",
+    "error_type": "wrong_column",
+    "timestamp": 1774363067.554537
+  },
+  {
+    "question": "What is the zip code of the address in the city Port Chelsea?",
+    "sql": "SELECT * FROM addresses join addresses on addresses.address_id  =  addresses.address_id where addresses.city  =  \"port chela\"",
+    "error": "ambiguous column name: main.Addresses.address_id",
+    "error_type": "ambiguous_column",
+    "timestamp": 1774363088.067368
+  },
+  {
+    "question": "Which department offers the most number of degrees? List department name and id.",
+    "sql": "select department_name,  department_id from degree_programs group by department_name order by count(*) desc limit 1",
+    "error": "no such column: department_name",
+    "error_type": "wrong_column",
+    "timestamp": 1774363090.070322
+  },
+  {
+    "question": "What are the first, middle, and last names, along with the ids, of all students who enrolled in 2 degree programs in one semester?",
+    "sql": "SELECT * FROM student_enrolment join student_enrolment on student_enrolment.student_enrolment_id  =  student_enrolment.student_enrolment_id where student_enrolment.degree_program_id  =  2",
+    "error": "ambiguous column name: main.Student_Enrolment.student_enrolment_id",
+    "error_type": "ambiguous_column",
+    "timestamp": 1774363109.793452
+  },
+  {
+    "question": "What are the first, middle, and last names for everybody enrolled in a Bachelors program?",
+    "sql": "select first_name,  middle_name,  last_name from student_enrolment where degree_program_id  =  \"bachelors\"",
+    "error": "no such column: first_name",
+    "error_type": "wrong_column",
+    "timestamp": 1774363115.111686
+  },
+  {
+    "question": "Which student has enrolled for the most times in any program? List the id, first name, middle name, last name, the number of enrollments and student id.",
+    "sql": "SELECT * FROM student_enrolment join student_enrolment on student_enrolment.student_enrolment_id  =  student_enrolment.student_enrolment_id group by student_enrolment.student_enrolment_id order by count(*) desc limit 1",
+    "error": "ambiguous column name: main.Student_Enrolment.student_enrolment_id",
+    "error_type": "ambiguous_column",
+    "timestamp": 1774363125.064553
+  },
+  {
+    "question": "What is the first, middle, and last name, along with the id and number of enrollments, for the student who enrolled the most in any program?",
+    "sql": "SELECT * FROM student_enrolment join student_enrolment_course on student_enrolment.student_enrolment_id  =  student_enrolment.student_enrolment_id group by student_enrolment.student_enrolment_id order by count(*) desc limit 1",
+    "error": "no such table: student_enrolment_course",
+    "error_type": "wrong_table",
+    "timestamp": 1774363127.3334122
+  },
+  {
+    "question": "What is the phone number of the man with the first name Timmothy and the last name Ward?",
+    "sql": "SELECT * FROM addresses as t1 join students as t2 on t1.address_id  =  t2.address_id where t2.first_name  =  \"timmothy\" intersect SELECT * FROM addresses as t1 join students as t2 on t1.address_id  =  t2.address_id where t2.last_name  =  \"ward\"",
+    "error": "no such column: t2.address_id",
+    "error_type": "wrong_column",
+    "timestamp": 1774363145.607483
+  },
+  {
+    "question": "What is the first, middle, and last name of the earliest school graduate?",
+    "sql": "select first_name,  middle_name,  last_name from semesters order by date_left asc limit 1",
+    "error": "no such column: first_name",
+    "error_type": "wrong_column",
+    "timestamp": 1774363151.165855
+  },
+  {
+    "question": "Whose permanent address is different from his or her current address? List his or her first name.",
+    "sql": "SELECT * FROM addresses join student_enrolment on addresses.address_id  =  student_enrolment.current_address_id where addresses.city  =  \"his\" or addresses.city  =  \"her\"",
+    "error": "no such column: student_enrolment.current_address_id",
+    "error_type": "wrong_column",
+    "timestamp": 1774363152.652266
+  },
+  {
+    "question": "What is the first name of the student whose permanent address is different from his or her current one?",
+    "sql": "select first_name from student_enrolment where permanent_address_id!= (select permanent_address_id from student_enrolment)",
+    "error": "no such column: first_name",
+    "error_type": "wrong_column",
+    "timestamp": 1774363154.6458502
+  },
+  {
+    "question": "How many times at most can a course enrollment result show in different transcripts? Also show the course enrollment id.",
+    "sql": "select count(*) from student_enrolment group by course_id order by count(*) desc limit 1",
+    "error": "no such column: course_id",
+    "error_type": "wrong_column",
+    "timestamp": 1774363166.1770968
+  },
+  {
+    "question": "What is the maximum number of times that a course shows up in different transcripts and what is that course's enrollment id?",
+    "sql": "SELECT * FROM courses join student_enrolment_course on courses.course_id  =  student_enrolment_course.course_id group by courses.course_id",
+    "error": "no such table: student_enrolment_course",
+    "error_type": "wrong_table",
+    "timestamp": 1774363167.4879382
+  },
+  {
+    "question": "List all the student details in reversed lexicographical order.",
+    "sql": "select distinct other_student_details from student_enrolment order by other_student_details asc",
+    "error": "no such column: other_student_details",
+    "error_type": "wrong_column",
+    "timestamp": 1774363177.776586
+  },
+  {
+    "question": "What are the names of all cartoons directed by Ben Jones?",
+    "sql": "SELECT * FROM cartoon join cartoon on cartoon.id  =  cartoon.directed_by where cartoon.directed_by  =  \"ben jones\"",
+    "error": "ambiguous column name: main.Cartoon.id",
+    "error_type": "ambiguous_column",
+    "timestamp": 1774363188.623192
+  },
+  {
+    "question": "What is the content of the series Sky Radio?",
+    "sql": "SELECT * FROM tv_channel as t1 join tv_series as t2 on t1.id  =  t2.id where t2.series_name  = 'sky radio'",
+    "error": "no such column: t2.series_name",
+    "error_type": "wrong_column",
+    "timestamp": 1774363201.2962198
+  },
+  {
+    "question": "What is the TV Channel that shows the cartoon \"The Rise of the Blue Beetle!\"? List the TV Channel's series name.",
+    "sql": "SELECT * FROM cartoon as t1 join tv_channel as t2 on t1.id  =  t2.id where t2.title  =  \"the blue beetle!\"",
+    "error": "no such column: t2.title",
+    "error_type": "wrong_column",
+    "timestamp": 1774363210.118159
+  },
+  {
+    "question": "What is the series name of the TV Channel that shows the cartoon \"The Rise of the Blue Beetle\"?",
+    "sql": "SELECT * FROM cartoon as t1 join tv_channel as t2 on t1.id  =  t2.id join tv_series as t3 on t2.id  =  t3.id where t3.title  =  \"the blue beetle\"",
+    "error": "no such column: t3.title",
+    "error_type": "wrong_column",
+    "timestamp": 1774363211.592033
+  },
+  {
+    "question": "What are all of the episodes ordered by ratings?",
+    "sql": "select epepisode fromTV_series order by ratings",
+    "error": "no such column: epepisode",
+    "error_type": "wrong_column",
+    "timestamp": 1774363215.180175
+  },
+  {
+    "question": "List top 3 highest Rating  TV series. List the TV series's Episode and Rating.",
+    "sql": "select episode,  rank from tv_series order by rank desc limit 3",
+    "error": "no such column: rank",
+    "error_type": "wrong_column",
+    "timestamp": 1774363215.583609
+  },
+  {
+    "question": "What are 3 most highly rated episodes in the TV series table and what were those ratings?",
+    "sql": "select max(epepisode),  ratings from t1 join tv_series on t1.id  =  t2.id group by epepisode order by count(*) desc limit 3",
+    "error": "no such table: t1",
+    "error_type": "wrong_table",
+    "timestamp": 1774363216.514994
+  },
+  {
+    "question": "What is the name of the series that has the episode \"A Love of a Lifetime\"?",
+    "sql": "select series_name fromTV_series where epepisode  =  \"a love of a lifetime\"",
+    "error": "no such column: series_name",
+    "error_type": "wrong_column",
+    "timestamp": 1774363224.084329
+  },
+  {
+    "question": "List the Episode of all  TV series showed on TV Channel with series name \"Sky Radio\".",
+    "sql": "select episode from t1 join tv_series on t1.id  =  t2.id where t2.series_name  =  \"sky radio\"",
+    "error": "no such table: t1",
+    "error_type": "wrong_table",
+    "timestamp": 1774363225.411509
+  },
+  {
+    "question": "What is the episode for the TV series named \"Sky Radio\"?",
+    "sql": "select episode fromTV_series where series_name  =  \"sky radio\"",
+    "error": "no such column: episode",
+    "error_type": "wrong_column",
+    "timestamp": 1774363226.2836611
+  },
+  {
+    "question": "What is the produdction code and channel of the most recent cartoon ?",
+    "sql": "select prodction_code,  channel from cartoon order by last_air_date desc limit 1",
+    "error": "no such column: prodction_code",
+    "error_type": "wrong_column",
+    "timestamp": 1774363230.2733939
+  },
+  {
+    "question": "Find the package choice and series name of the TV channel that has high definition TV.",
+    "sql": "select package_option,  series_name from tv_channel order by high_definition_tv desc limit 1",
+    "error": "no such column: high_definition_tv",
+    "error_type": "wrong_column",
+    "timestamp": 1774363231.2319648
+  },
+  {
+    "question": "which countries' tv channels are not playing any cartoon written by Todd Casey?",
+    "sql": "SELECT * FROM cartoon where written_by not in (SELECT * FROM cartoon join tv_channel on cartoon.id  =  tv_channel.id where cartoon.delivery_code  =  'todd casey')",
+    "error": "no such column: cartoon.delivery_code",
+    "error_type": "wrong_column",
+    "timestamp": 1774363235.969728
+  },
+  {
+    "question": "What are the countries that are not playing cartoons written by Todd Casey?",
+    "sql": "select country from cartoon where written_by not in (select written_by from cartoon where directed_by  =  'todd casey')",
+    "error": "no such column: country",
+    "error_type": "wrong_column",
+    "timestamp": 1774363237.3692899
+  },
+  {
+    "question": "Find the series name and country of the tv channel that is playing some cartoons directed by Ben Jones and Michael Chang?",
+    "sql": "SELECT * FROM cartoon as t1 join tv_channel as t2 on t1.id  =  t2.id where t2.directed_by  =  \"ben jones\" intersect SELECT * FROM cartoon as t1 join tv_series as t2 on t1.id  =  t2.id where t2.directed_by  =  \"michael chang\"",
+    "error": "no such column: t2.directed_by",
+    "error_type": "wrong_column",
+    "timestamp": 1774363239.6125288
+  },
+  {
+    "question": "What is the series name and country of all TV channels that are playing cartoons directed by Ben Jones and cartoons directed by Michael Chang?",
+    "sql": "SELECT * FROM cartoon as t1 join tv_channel as t2 on t1.id  =  t2.id where t2.directed_by  =  'ben jones' intersect SELECT * FROM cartoon as t1 join tv_series as t2 on t1.id  =  t2.id where t2.directed_by  = 'michael chang'",
+    "error": "no such column: t2.directed_by",
+    "error_type": "wrong_column",
+    "timestamp": 1774363241.849792
+  },
+  {
+    "question": "find the pixel aspect ratio and nation of the tv channels that do not use English.",
+    "sql": "select pixel_aspect_ratio_par,  nation from tv_channel where language!= \"english\"",
+    "error": "no such column: nation",
+    "error_type": "wrong_column",
+    "timestamp": 1774363242.687499
+  },
+  {
+    "question": "find the id of tv channels that do not play any cartoon directed by Ben Jones.",
+    "sql": "SELECT * FROM cartoon where directed_by not in (SELECT * FROM cartoon join tv_channel on cartoon.id  =  tv_channel.id where cartoon.directed_by  =  \"ben jones\")",
+    "error": "sub-select returns 16 columns - expected 1",
+    "error_type": "other",
+    "timestamp": 1774363245.8239748
+  },
+  {
+    "question": "What are the ids of the TV channels that do not have any cartoons directed by Ben Jones?",
+    "sql": "select id from t1 join cartoon on t1.id  =  cartoon.id where t1.directed_by  =  \"ben jones\"",
+    "error": "no such table: t1",
+    "error_type": "wrong_table",
+    "timestamp": 1774363246.670304
+  },
+  {
+    "question": "What are the names of the contestants whose names are not 'Jessie Alloway'",
+    "sql": "select contestant_name from consTESTANTs where contestant_name not in (select contestant_name from consTESTANTs where contestant_name!= 'jessie alloway')",
+    "error": "no such table: consTESTANTs",
+    "error_type": "wrong_table",
+    "timestamp": 1774363295.770538
+  },
+  {
+    "question": "What are the create dates, states, and phone numbers of the votes that were for the contestant named 'Tabatha Gehling'?",
+    "sql": "select created,  state,  phone_number from votes where contestant_name  =  'tabatha gehling'",
+    "error": "no such column: contestant_name",
+    "error_type": "wrong_column",
+    "timestamp": 1774363302.451466
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select avg(lifeexpectancy) from country where countrycode!= \"english\"",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774418745.838926
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select episode,  rank from tv_series order by rank desc limit 3",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774418771.003537
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select count(distinct series_name) fromTV_channel",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774418773.21531
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select countrycode from country where governmentform!= \"republic\" except select country.code from country join countrylanguage on country.countrycode  =  countrylanguage.countrycode where countrylanguage.language  =  \"english\" and countrylanguage.governmentform  =  \"republic\"",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774418783.653239
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select conductor.name from conductor join business on conductor.conductor_id  =  business.conductor_id group by conductor.conductor_id order by count(*) desc limit 1",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774418786.487086
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select song_name,  song_release_year from singer order by year desc limit 1",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774418789.2845562
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select country.name,  country.population,  country.lifeexpectancy from country join countryon country.code  =  country.code where country.region  =  'asian' group by country.code order by count(*) desc limit 1",
+    "error": "schema_invalid",
+    "error_type": "missing_join",
+    "timestamp": 1774418796.036087
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select epepisode fromTV_series order by ratings",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774418798.8647559
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select conductor.name from conductor join orbit on conductor.conductor_id  =  orbit.conductor_id group by conductor.conductor_id having count(*)  >  1",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774418801.5313191
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select last_name from student_enrolment where degree_program_id not in (select degree_program_id from student_enrolment where degree_program_id  =  \"north\" )",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774418806.895251
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select car_names.make,  car_names.production from car_names join cars_data on car_names.make  =  cars_data.id where cars_data.year  =  (select min(year) from cars_data)",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774418812.7122371
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select min(weight) from car_data where cylinders  =  8 and year  =  1974",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774418821.255251
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select t1.contestant_number,  t1.contestant_name from votes as t1 join consTESTANTs as t2 on t1.contestant_number  =  t2.contestant_number group by t1.contestant_number order by count(*) desc limit 1",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774418826.6450639
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select ship.id,  death.name from death join ship on death.caused_by_ship_id  =  ship.id group by death.injured order by count(*) desc limit 1",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774418833.8210812
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select teacher.name,  course.course from course_teach join teacher on course_teach.teacher_id  =  teacher.teacher_id order by teacher.name",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774418838.940508
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select shop.name from employee join hiring on employee.employee_id  =  hiring.employee_id group by hiring.shop_id order by count(*) desc limit 1",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774418856.4030359
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select region from country where language  =  \"english\" or language  =  \"dutch\"",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774418874.07862
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select max(epepisode),  ratings from t1 join tv_series on t1.id  =  t2.id group by epepisode order by count(*) desc limit 3",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774418877.353694
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select car_makers.fullname from car_makers join car_names on car_makers.id  =  car_names.make where car_names.year  =  1970",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774418881.988201
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select distinct t1.template_details from documents as t1 join templates as t2 on t1.template_id  =  t2.template_id",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774418884.2661061
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select first_name,  middle_name,  last_name from student_enrolment",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774418889.501583
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select conductor.name from conductor join orbit on conductor.conductor_id  =  orbit.conductor_id where orbit.year_of_founded  >  2008",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774418891.845346
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select name from orbit where orbit_id not in (select orbit_id from performance)",
+    "error": "schema_invalid",
+    "error_type": "wrong_where",
+    "timestamp": 1774418911.3974779
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select country_makers.country,  country_names.country from car_makers join country_names on car_makers.id  =  country_names.country where model_list.model  =  'fiat' group by country_names.country",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774418929.096745
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select addresses.zip_postcode from addresses join addresses on addresses.address_id  =  addresses.address_id where addresses.city  =  \"port chela\"",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774418946.657606
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select sum(cartoon.directed_by) from cartoon join cartoon on cartoon.id  =  cartoon.id group by cartoon.directed_by",
+    "error": "schema_invalid",
+    "error_type": "wrong_groupby",
+    "timestamp": 1774418949.475059
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select song.title,  singer.name from song join song on song.song_id  =  song.song_id",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774418951.8295748
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select avg(transcripts.transcript_date) from transcripts join student_enrolment on transcripts.transcript_id  =  student_enrolment.transcript_id",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774418960.991333
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select distinct model from model_list join car_makers on model_list.maker  =  car_makers.id where car_makers.fullname  =  \"general motors\" or car_names.weight  >  3500",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774418968.736182
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select degree_programs.degree_summary_name from degree_programs join department_programs on degree_programs.department_id  =  department_programs.department_id where department_name  =  \"engineering\"",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774418975.042732
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select first_name,  middle_name,  last_name from student_enrolment where degree_program_id  =  \"bachelors\"",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774418982.566178
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select conductor.name from conductor join orbit on conductor.conductor_id  =  orbit.conductor_id group by conductor.conductor_id having count(*)  >  1",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774418985.235182
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select episode fromTV_series where air_date  =  \"a love of a lifetime\"",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774418991.497511
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select min(weight) from car_data where cylinders  =  8 and year  =  1974",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419025.029217
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select owner.first_name,  dogs.name from owners join dogs on owners.owner_id  =  dogs.owner_id",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419027.363787
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select avg(earnings) from poker_player where height  >  200",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419029.8377879
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select department_description from department_details where department_name like '%computer%'",
+    "error": "schema_invalid",
+    "error_type": "wrong_where",
+    "timestamp": 1774419038.676172
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select distinct car_makers.fullname from car_makers join car_names on car_makers.id  =  car_names.make where car_names.year  =  1970",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419052.226411
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select avg(lifeexpectancy) from country where countrycode  =  \"central africa\"",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419053.784526
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select money_rank from poker_player order by height desc limit 1",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419059.866434
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select max(tonnage),  min(tonnage) from death",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419064.3424268
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select teacher.name,  count(*) from course_arrange join teacher on course_arrange.teacher_id  =  teacher.teacher_id group by course.course_id",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419071.573291
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select teacher.name,  course.course from course_arrange join course on course_arrange.course_id  =  course.course_id",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419077.217746
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select count(*) from professionals where professionals.professional_id not in ( select professionals.professional_id from professionals join dogs on professionals.professional_id  =  dogs.professional_id",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419085.88054
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select professionals.first_name,  professionals.last_name from professionals join treatments on professionals.professional_id  =  treatments.professional_id where treatments.cost_of_treatment  <  (select avg(cost_of_treatment) from professionals)",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419092.116766
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select cars_data.cylinders from car_names join model_list on car_names.model  =  model_list.model where model_list.horsepower  =  4 group by cars_data.cylinders order by count(*) desc limit 4",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419098.028336
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select contestant_name from consTESTANTs where contestant_name not in (select contestant_name from consTESTANTs where contestant_name!= 'jessie alloway')",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419108.191989
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select count(distinct winner_name) from players where first_name = \"wta\" and last_name = \"championship\"",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419114.1469288
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select singer.name,  count(*) from concert join singer_in_concert on concert.concert_id  =  singer_in_concert.concert_id group by concert.concert_id",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419117.499885
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select airlines.airline from airlines join flights on airlines.uid  =  flights.sourceairport where airports.country  =  'apg' intersect select airlines.airline from airlines join airports on airlines.uid  =  airports.uid where airports.country  =  'cvo'",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419124.3293009
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select singer.name from singer join song on singer.song_id  =  song.song_id group by singer.song_id order by count(*) desc limit 1",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419130.5673542
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select courses.course_name from courses join student_enrolment_course on courses.course_id  =  student_enrolment_course.course_id",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419139.952565
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select city.name from city join country on city.countrycode  =  country.countrycode where country.population  >  160000 intersect select city.id from city join country on city.countrycode  =  country.countrycode where country.population  >  900000",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419157.9558358
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select airlines.airline from airlines join flights on airlines.uid  =  flights.airline where airports.city  =  \"apg\" intersect select airlines.uid from airlines join airports on airlines.uid  =  airports.uid where airports.city  =  \"cyv\"",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419163.7707589
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select model from model_list order by horsepower desc limit 1",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419165.591606
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select first_name,  last_name from players order by birth_date",
+    "error": "execution_error",
+    "error_type": "other",
+    "timestamp": 1774419187.2484
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select id from t1 join cartoon on t1.id  =  cartoon.id where t2.directed_by  =  \"ben jones\"",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419193.805353
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select professionals.professional_id,  professionals.role_code from professionals join treatment on professionals.professional_id  =  treatment.professional_id",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419199.027013
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select first_name from student_enrolment where permanent_address_id!= (select permanent_address_id from student_enrolment)",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419229.591891
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select template_type_code,  count(*) from documents group by template_type_code",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419237.2071521
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select pixel_aspect_ratio_par,  nation from tv_channel where language!= \"english\"",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419248.90842
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select prodction_code,  channel from cartoon order by last_air_date desc limit 1",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419250.5082119
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select ref_template_types.template_type_code from documents join ref_template_types on documents.template_id  =  ref_template_types.template_id where documents.document_name  =  \"data base\"",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419267.7214458
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select distinct addresses.address_id from addresses join student_enrolment on addresses.address_id  =  student_enrolment.address_id",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419277.962689
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select document_name from documents where template_type_code  =  'bk'",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419310.687197
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select countrylanguage.language from country join countrylanguage on country.countrycode  =  countrylanguage.countrycode where country.continent  =  'asian' group by countrylanguage.language order by count(*) desc limit 1",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419320.022699
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select treatment_types.treatment_type_description from t1 join treatment_types on t1.treatment_type_code  =  treatment_types.treatment_type_code order by t1.cost_of_treatment desc limit 1",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419331.056145
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select airports.airportcode from airports join flights on airports.country  =  flights.country group by airports.airportcode order by count(*) desc limit 1",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419334.776691
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select shop.name from hiring join employee on hiring.employee_id  =  employee.employee_id",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419350.483715
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select major from student where stuid not in (select stuid from has_pet where pettype  =  \"cat as a pet\")",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419358.332855
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select student.fname from student join has_pet on student.stuid  =  has_pet.stuid join pets on has_pet.petid  =  pets.petid where has_pet.pettype  =  \"cats\" intersect select student.fname from student join has_pet on has_pet.stuid  =  has_pet.stuid where has_pet.pettype  =  \"dogs\"",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419364.6493561
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select airlines.abbrev,  airlines.country from airlines join flights on airlines.uid  =  flights.airline group by airlines.abbrev order by count(*) desc limit 1",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419385.8420858
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select airlines.airline from airlines join flights on airlines.uid  =  flights.airline where flights.nightno  >  200",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419399.993846
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select record_company from orbit group by record_company order by count(*) desc limit 1",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419407.216874
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select countryname from car_makers group by country order by count(*) desc limit 1",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419411.914429
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select conductor.name,  oductor.orchestra_id from conductor join oductor on conductor.conductor_id  =  oductor.conductor_id",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419421.9307158
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select department_name,  department_id from department_programs group by department_id order by count(*) desc limit 1",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419426.32165
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select shop.name from hiring join employee on hiring.employee_id  =  employee.employee_id group by hiring.shop_id order by count(*) desc limit 1",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419429.497768
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select countrycode from country where population  <  (select min(population) from country where countrycode  =  'asia')",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419433.752245
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select country.name from country join city on country.countrycode  =  city.countrycode group by city.countrycode order by count(*) desc limit 3",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419442.5951848
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select region from country where countrycode  =  'kabul'",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419444.394736
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select song.title,  singer.name from song join singer on song.songid  =  singer.songid",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419461.242704
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select count(*) from orbit where major_record_format  =  \"cd\" or major_record_format  =  \"dvd\"",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419463.0529768
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select student.fname from has_pet join pets on has_pet.petid  =  pets.petid join student on has_pet.stuid  =  student.stuid where has_pet.pettype  =  \"cat\" intersect select student.fname from has_pet join pets on has_pet.petid  =  pets.petid where pets.pet_age  =  \"dog\"",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419474.95069
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select highschooler.name from highschooler join friend on highschooler.id  =  friend.friend_id where friend.grade  >  5 and friend.friend_id  =  2",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419482.810221
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select winner_name from rankings where ranking_points  =  'australian open tournament' group by winner_name order by count(*) desc limit 1",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419485.077524
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select avg(lifeexpectancy) from country where countrycode!= \"english\"",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419513.016549
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select teacher.name,  count(*) from course_arrange join teacher on course_arrange.teacher_id  =  teacher.teacher_id group by course.course_id",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419527.212466
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select record_company from orbit group by record_company order by count(*) desc limit 1",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419534.6212668
+  },
+  {
+    "question": "UNKNOWN",
+    "sql": "select year_of_founded from business group by year_of_founded having count(*)  >  1",
+    "error": "schema_invalid",
+    "error_type": "other",
+    "timestamp": 1774419538.5559838
+  }
+]

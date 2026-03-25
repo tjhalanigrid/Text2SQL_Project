@@ -1,0 +1,18 @@
+[
+  {
+    "question": "List singers who never performed in any concert",
+    "type": "JOIN + NULL"
+  },
+  {
+    "question": "Find the singer with maximum number of concerts",
+    "type": "GROUP BY + ORDER BY"
+  },
+  {
+    "question": "List concerts where no singer performed",
+    "type": "LEFT JOIN + NULL"
+  },
+  {
+    "question": "Find singers who performed in more than 3 concerts",
+    "type": "HAVING"
+  }
+]

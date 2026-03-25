@@ -1,0 +1,30 @@
+{
+  "n": 100,
+  "sample_seed": 42,
+  "db_id_file": null,
+  "use_constrained": true,
+  "models": {
+    "hard": {
+      "adapter": "checkpoints/best_rlhf_model_2",
+      "n": 100,
+      "em": 0.0,
+      "ex": 0.02,
+      "constraint_rate": 0.11,
+      "hard_reward_mean": 0.02,
+      "hard_reward_var": 0.019599999999999992,
+      "soft_reward_mean": 0.02,
+      "soft_reward_var": 0.019599999999999992
+    },
+    "soft": {
+      "adapter": "checkpoints/best_rlhf_codet5_soft",
+      "n": 100,
+      "em": 0.0,
+      "ex": 0.04,
+      "constraint_rate": 0.21,
+      "hard_reward_mean": 0.04,
+      "hard_reward_var": 0.038400000000000004,
+      "soft_reward_mean": 0.04666666666666666,
+      "soft_reward_var": 0.042266666666666654
+    }
+  }
+}
