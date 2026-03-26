@@ -398,6 +398,7 @@ Use this for stable deployment:
 | T5-Small | 9.0% | 8.3% |
 | BART-Base | 24.0% | 21.23% |
 | CodeT5-Base | **41.7%** | **37.9%** |
+(based on random split and best epoch)
 
 Although RLHF slightly reduced execution accuracy in some cases, it improved **semantic alignment and logical reasoning**, confirmed through manual evaluation.
 

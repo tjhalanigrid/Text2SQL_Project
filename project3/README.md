@@ -20,18 +20,18 @@ The goal is to transform a slow, error-prone baseline into a scalable, schema-aw
 
 ## Key Results
 
-- 5.63× speedup in SQL execution (1.62s → 0.28s) using parallelization + caching  
-- Execution Accuracy improved to 44.0% via soft reward shaping  
-- ~72% schema-valid SQL generation using constrained decoding  
-- 79.2% errors identified as schema-related (wrong_column) → guided constraint design  
-- ~2× latency reduction with INT8 quantization (3.11s → 1.65s)  
+- Achieved over **5× speedup** in SQL execution using parallelization and caching  
+- Improved execution accuracy to **~44%** using soft reward shaping  
+- Generated **~70%+ schema-valid SQL** via constrained decoding  
+- Identified majority of errors as schema-related → guided constraint design  
+- Achieved **~2× latency reduction** using INT8 quantization  
 - Reduced reward variance → more stable RL training  
 
 ---
 
 ## Model Checkpoint Setup
 
-To run this project locally, you need to firstly clones project from main readme then download the trained model checkpoint.
+To run this project locally, first clone the project from the main repository and download the trained model checkpoint.
 
 ### Step 1: Download Checkpoint
 
@@ -79,28 +79,28 @@ project_root/
 
 ### Task 1: Parallel SQL Execution Optimization
 - Multi-threaded rollout execution using ThreadPoolExecutor  
-- Connection pooling + query caching  
-- Eliminated database I/O bottleneck  
+- Connection pooling and query caching  
+- Reduced database I/O bottlenecks  
 
 ### Task 2: Execution Error Diagnostics & Telemetry
-- Error classification system (wrong_column, wrong_table, etc.)  
-- Identified schema hallucination as dominant failure mode  
-- Clause-level error analysis dashboard  
+- Built error classification system (wrong_column, wrong_table, etc.)  
+- Identified schema hallucination as a dominant failure mode  
+- Developed clause-level error analysis  
 
 ### Task 3: Schema-Aware Constrained Decoding
 - Logit masking using schema constraint graph  
 - Prevented invalid table/column generation  
-- Improved execution correctness over exact match  
+- Improved execution correctness  
 
 ### Task 4: Soft Reward Shaping
-- Introduced dense reward (partial correctness)  
-- Improved execution accuracy and reduced variance  
-- Stabilized reinforcement learning training  
+- Introduced dense reward for partial correctness  
+- Improved execution accuracy and training stability  
+- Reduced reward variance  
 
 ### Task 5: Quantized Inference Benchmarking
-- INT8 dynamic quantization for CPU deployment  
-- Mixed precision (decoder-only quantization)  
-- Reduced latency without accuracy loss  
+- Applied INT8 dynamic quantization for CPU deployment  
+- Used mixed precision (decoder-focused quantization)  
+- Reduced inference latency without significant accuracy loss  
 
 ---
 
@@ -108,22 +108,25 @@ project_root/
 
 | Metric | Baseline | Optimized |
 |--------|---------|----------|
-| Execution Speed | 1.62s | 0.28s |
-| Execution Accuracy | ~38% | 44.0% |
-| Schema Validity | Low | ~72% |
-| Inference Latency | 3.1s | 1.65s |
+| Execution Speed | ~1.6s | ~0.3s |
+| Execution Accuracy | ~38% | ~44% |
+| Schema Validity | Low | ~70%+ |
+| Inference Latency | ~3s | ~1.6s |
+ (based on random split and best epoch )
+ - for better result please refer report - https://tjhalanigrid.github.io/text2sql_2/
+ 
 
 ---
 
 ## Core Implementation Mapping (Tasks 1–5)
 
 ### Task 01: Parallel SQL Execution
-- execution_reward.py → Parallel rollout + reward logic  
+- execution_reward.py → Parallel rollout and reward logic  
 - run_sql.py → SQL execution and timeout handling  
 - scripts/benchmark_parallel_reward.py → Benchmarking  
 
 ### Task 02: Error Diagnostics
-- sql_validator.py → SQL validation + error detection  
+- sql_validator.py → SQL validation and error detection  
 - execution_reward.py → Runtime error capture  
 - app.py → Error classification logic  
 
@@ -146,7 +149,7 @@ project_root/
 
 ## Key Improvements Over Base System
 
-- Eliminated SQL execution bottleneck  
+- Eliminated SQL execution bottlenecks  
 - Reduced schema hallucination errors  
 - Stabilized RL training with dense rewards  
 - Improved execution accuracy  
@@ -159,7 +162,7 @@ project_root/
 - Scale to larger models (CodeT5+, LLaMA, Mistral)  
 - Integrate RAG for large schemas  
 - Support multi-turn conversational SQL  
-- Improve reward shaping strategies  
+- Further refine reward shaping strategies  
 
 ---
 
