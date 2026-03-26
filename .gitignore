@@ -73,13 +73,14 @@ data/database/*
 # Mac files
 .DS_Store
 text2sql-demo/
-
+text2sql-demo_copy/ 
 sample.txt
 
 # Local training artifacts (ignore)
 checkpoints/**
-!checkpoints/best_rlhf_model/
-!checkpoints/best_rlhf_model/**
+!checkpoints/best_rlhf_model_2/
+!checkpoints/best_rlhf_model_2/**
+!checkpoints/task5/int8_dynamics/**
 outputs/
 final_databases/
 experiments/v1_codet5_rlhf/adapter_model.bin

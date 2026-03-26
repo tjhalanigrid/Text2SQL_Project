@@ -6,7 +6,6 @@ import sys
 import argparse
 import re
 import sqlite3
-import os
 from pathlib import Path
 
 import torch
@@ -49,13 +48,11 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--adapter", type=str, default="checkpoints/sft_best_bart_2")
-    parser.add_argument("--num_samples", type=int, default=700)
+    parser.add_argument("--num_samples", type=int, default=1000)
     args = parser.parse_args()
 
     project_root = Path(__file__).resolve().parents[1]
     adapter_dir = project_root / args.adapter
-    adapter_dir_str = str(adapter_dir)
-    adapter_for_peft = os.path.relpath(adapter_dir, project_root)
 
     if not adapter_dir.exists():
         raise FileNotFoundError(f"Adapter not found: {adapter_dir}")
@@ -73,14 +70,14 @@ def main():
 
     # -------- LOAD MODEL --------
     print("Loading tokenizer...")
-    tokenizer = AutoTokenizer.from_pretrained(adapter_dir_str, local_files_only=True)
+    tokenizer = AutoTokenizer.from_pretrained(adapter_dir)
 
     BASE_MODEL = "facebook/bart-base"
     print(f"Loading base model {BASE_MODEL}...")
     base_model = AutoModelForSeq2SeqLM.from_pretrained(BASE_MODEL).to(device)
 
     print("Loading LoRA adapter...")
-    model = PeftModel.from_pretrained(base_model, adapter_for_peft, local_files_only=True).to(device)
+    model = PeftModel.from_pretrained(base_model, adapter_dir).to(device)
     model = model.merge_and_unload()
     model.eval()
 

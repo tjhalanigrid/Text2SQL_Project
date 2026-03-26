@@ -1,3 +1,194 @@
+# from __future__ import annotations
+
+# import json
+# import subprocess
+# import sys
+# import argparse
+# import sqlite3
+# import random
+# from pathlib import Path
+
+# import torch
+# from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+# from peft import PeftModel
+
+# from prompting import encode_prompt
+
+
+# def _parse_exec_accuracy(stdout: str) -> float | None:
+#     for line in stdout.splitlines():
+#         if line.strip().startswith("execution"):
+#             try:
+#                 return float(line.split()[-1])
+#             except:
+#                 return None
+#     return None
+
+
+# def main():
+
+#     # ---------------- ARGUMENTS ----------------
+#     parser = argparse.ArgumentParser()
+#     parser.add_argument("--adapter", type=str, default="checkpoints/sft_adapter_codet5")
+#     parser.add_argument("--num_samples", type=int, default=1000)
+#     parser.add_argument("--shuffle_dev", action="store_true")
+#     parser.add_argument("--shuffle_seed", type=int, default=42)
+#     parser.add_argument("--accuracy_log", type=str, default="")
+#     args = parser.parse_args()
+
+#     project_root = Path(__file__).resolve().parents[1]
+#     adapter_dir = project_root / args.adapter
+
+#     db_root = project_root / "data" / "database"
+#     table_json = project_root / "data" / "tables.json"
+#     dev_json = project_root / "data" / "dev.json"
+#     gold_sql = project_root / "data" / "dev_gold.sql"
+#     pred_path = project_root / "predictions.txt"
+
+#     if not adapter_dir.exists():
+#         raise FileNotFoundError(f"Missing adapter dir: {adapter_dir}")
+
+#     # ---------------- DEVICE ----------------
+#     device = "mps" if torch.backends.mps.is_available() else (
+#         "cuda" if torch.cuda.is_available() else "cpu"
+#     )
+#     print("Using device:", device)
+
+#     # ---------------- LOAD MODEL ----------------
+#     BASE_MODEL = "Salesforce/codet5-base"
+
+#     tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
+
+#     if tokenizer.pad_token is None:
+#         tokenizer.pad_token = tokenizer.eos_token
+
+#     base = AutoModelForSeq2SeqLM.from_pretrained(BASE_MODEL).to(device)
+#     model = PeftModel.from_pretrained(base, str(adapter_dir)).to(device)
+
+#     model = model.merge_and_unload()
+#     model.eval()
+
+#     # ---------------- LOAD DATA ----------------
+#     with dev_json.open() as f:
+#         dev = json.load(f)
+
+#     if args.shuffle_dev:
+#         rng = random.Random(args.shuffle_seed)
+#         rng.shuffle(dev)
+
+#     dev = dev[: args.num_samples]
+
+#     # ---------------- GENERATION CONFIG ----------------
+#     gen_kwargs = dict(
+#         max_new_tokens=160,
+#         num_beams=4,
+#         do_sample=False,
+#         early_stopping=True,
+#         pad_token_id=tokenizer.pad_token_id,
+#         eos_token_id=tokenizer.eos_token_id,
+#     )
+
+#     print("Generating predictions...\n")
+
+#     correct = 0
+#     total = len(dev)
+#     accuracy_log_fh = None
+
+#     if args.accuracy_log:
+#         accuracy_log_path = (project_root / args.accuracy_log).resolve()
+#         accuracy_log_path.parent.mkdir(parents=True, exist_ok=True)
+#         accuracy_log_fh = accuracy_log_path.open("w")
+#         print(f"Writing running accuracy log to: {accuracy_log_path}")
+
+#     with pred_path.open("w") as out_f, torch.no_grad():
+
+#         for i, ex in enumerate(dev, start=1):
+
+#             db_id = ex["db_id"]
+#             question = ex["question"]
+#             gold_query = ex["query"]
+
+#             input_ids = encode_prompt(
+#                 tokenizer,
+#                 question,
+#                 db_id,
+#                 device=device,
+#                 max_input_tokens=512,
+#             )
+
+#             input_ids = input_ids.unsqueeze(0).to(device)
+#             attention_mask = (input_ids != tokenizer.pad_token_id).long().to(device)
+
+#             outputs = model.generate(
+#                 input_ids=input_ids,
+#                 attention_mask=attention_mask,
+#                 **gen_kwargs
+#             )
+
+#             pred_sql = tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
+#             out_f.write(f"{pred_sql}\t{db_id}\n")
+
+#             # ---------------- LIVE EXECUTION CHECK ----------------
+#             try:
+#                 db_path = db_root / db_id / f"{db_id}.sqlite"
+
+#                 conn = sqlite3.connect(db_path)
+#                 cursor = conn.cursor()
+
+#                 cursor.execute(pred_sql)
+#                 pred_rows = cursor.fetchall()
+
+#                 cursor.execute(gold_query)
+#                 gold_rows = cursor.fetchall()
+
+#                 conn.close()
+
+#                 if sorted(pred_rows) == sorted(gold_rows):
+#                     correct += 1
+
+#             except Exception:
+#                 pass  # execution failed
+
+#             # 🔥 PRINT EVERY 10
+#             if i % 10 == 0 or i == total:
+#                 current_acc = correct / i
+#                 line = f"{i}/{total} | Acc: {current_acc:.3f}"
+#                 print(line)
+#                 if accuracy_log_fh is not None:
+#                     accuracy_log_fh.write(line + "\n")
+
+#     if accuracy_log_fh is not None:
+#         accuracy_log_fh.close()
+
+#     print("\nGeneration finished.\n")
+
+#     # ---------------- OFFICIAL SPIDER EVAL ----------------
+#     eval_script = project_root / "spider_eval" / "evaluation.py"
+
+#     cmd = [
+#         sys.executable,
+#         str(eval_script),
+#         "--gold", str(gold_sql),
+#         "--pred", str(pred_path),
+#         "--etype", "exec",
+#         "--db", str(db_root),
+#         "--table", str(table_json),
+#     ]
+
+#     print("Running Spider evaluation...")
+#     proc = subprocess.run(cmd, capture_output=True, text=True)
+
+#     print(proc.stdout)
+
+#     exec_acc = _parse_exec_accuracy(proc.stdout)
+#     if exec_acc is not None:
+#         print(f"\n🎯 Official Execution Accuracy: {exec_acc*100:.2f}%")
+#     else:
+#         print("Could not parse accuracy.")
+
+
+# if __name__ == "__main__":
+#     main()
 
 import json
 import subprocess
@@ -7,7 +198,6 @@ import random
 import sqlite3
 import time
 import re
-import os
 from pathlib import Path
 
 import torch
@@ -98,8 +288,7 @@ def main():
 
     print(f"Loading Model: {args.adapter}...")
     base = AutoModelForSeq2SeqLM.from_pretrained(BASE_MODEL).to(device)
-    adapter_for_peft = os.path.relpath(adapter_dir, project_root)
-    model = PeftModel.from_pretrained(base, adapter_for_peft, local_files_only=True).to(device)
+    model = PeftModel.from_pretrained(base, str(adapter_dir)).to(device)
     model = model.merge_and_unload()
     model.eval()
 

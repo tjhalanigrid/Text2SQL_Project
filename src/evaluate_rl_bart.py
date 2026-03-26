@@ -3,7 +3,6 @@ import json
 import sqlite3
 import argparse
 import time
-import os
 from pathlib import Path
 import torch
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
@@ -77,21 +76,17 @@ def main():
     dev_json = project_root / "data" / "dev.json"
     db_root = project_root / "data" / "database"
 
-    #  Added CUDA support for Nvidia GPUs
+    # 🎯 Added CUDA support for Nvidia GPUs
     device = "mps" if torch.backends.mps.is_available() else ("cuda" if torch.cuda.is_available() else "cpu")
 
     # load model
     base_model = "facebook/bart-base"
     print(f"Loading Base: {base_model}")
     print(f"Loading Adapter: {args.adapter}")
-    adapter_path = Path(args.adapter)
-    if not adapter_path.is_absolute():
-        adapter_path = (project_root / adapter_path).resolve()
-    adapter_for_peft = os.path.relpath(adapter_path, project_root)
-
-    tokenizer = AutoTokenizer.from_pretrained(str(adapter_path), local_files_only=True)
+     
+    tokenizer = AutoTokenizer.from_pretrained(args.adapter)
     base = AutoModelForSeq2SeqLM.from_pretrained(base_model).to(device)
-    model = PeftModel.from_pretrained(base, adapter_for_peft, local_files_only=True).to(device)
+    model = PeftModel.from_pretrained(base, args.adapter).to(device)
     model = model.merge_and_unload()
 
     with open(dev_json) as f:

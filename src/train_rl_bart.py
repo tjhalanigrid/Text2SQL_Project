@@ -25,13 +25,13 @@ device = "mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is
 print("Using device:", device)
 
 # ======================================================
-# TRAINING SETTINGS ( OPTIMIZED FOR SPEED)
+# TRAINING SETTINGS (🚀 OPTIMIZED FOR SPEED)
 # ======================================================
 NUM_EPOCHS = 10         # Increased to compensate for faster epochs
 LOG_EVERY = 5              # Print logs much more frequently
 MAX_SCHEMA_CHARS = 1500
-MAX_OUTPUT_TOKENS = 48     #  Down from 64. 95% of Spider SQL is <40 tokens.
-ROLLOUTS_PER_EPOCH = 256   #  Down from 1024. Epochs will finish 4x faster!
+MAX_OUTPUT_TOKENS = 48     # 🚀 Down from 64. 95% of Spider SQL is <40 tokens.
+ROLLOUTS_PER_EPOCH = 256   # 🚀 Down from 1024. Epochs will finish 4x faster!
 
 # ======================================================
 # PATHS
@@ -238,7 +238,7 @@ generation_kwargs = dict(
 # ======================================================
 # TRAIN LOOP (BATCHED & OPTIMIZED)
 # ======================================================
-print("Starting RL training  (BART PPO Optimized)")
+print("Starting RL training 🚀 (BART PPO Optimized)")
 
 best_reward = -1e9
 global_ppo_step = 0

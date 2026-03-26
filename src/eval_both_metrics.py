@@ -4,7 +4,6 @@ import torch
 import re
 import time
 import argparse
-import os
 from pathlib import Path
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from peft import PeftModel
@@ -83,13 +82,9 @@ def main():
     base_model = "Salesforce/codet5-base"
 
     print(f"\n🚀 Loading Model from: {args.adapter}")
-    adapter_path = Path(args.adapter)
-    if not adapter_path.is_absolute():
-        adapter_path = (PROJECT_ROOT / adapter_path).resolve()
-    adapter_for_peft = os.path.relpath(adapter_path, PROJECT_ROOT)
-    tokenizer = AutoTokenizer.from_pretrained(str(adapter_path), local_files_only=True)
+    tokenizer = AutoTokenizer.from_pretrained(args.adapter)
     base = AutoModelForSeq2SeqLM.from_pretrained(base_model).to(device)
-    model = PeftModel.from_pretrained(base, adapter_for_peft, local_files_only=True).to(device)
+    model = PeftModel.from_pretrained(base, args.adapter).to(device)
     model = model.merge_and_unload()
     model.eval()
 

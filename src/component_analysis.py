@@ -106,7 +106,7 @@ def main():
         for comp in components_list
     }
 
-    #  NEW: Trackers for OVERALL accuracy by difficulty
+    # 🚀 NEW: Trackers for OVERALL accuracy by difficulty
     overall_correct = {diff: 0 for diff in difficulties_list}
     overall_total = {diff: 0 for diff in difficulties_list}
 
@@ -210,7 +210,7 @@ def main():
     plt.savefig("component_by_difficulty_plot.png", dpi=300)
 
     # -------------------------------
-    #  Terminal Printout
+    # 🚀 Terminal Printout
     # -------------------------------
     print("\n✅ Saved merged plot -> component_by_difficulty_plot.png")
     
