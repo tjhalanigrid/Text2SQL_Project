@@ -78,9 +78,9 @@ sample.txt
 
 # Local training artifacts (ignore)
 checkpoints/**
-!checkpoints/best_rlhf_model_2/
-!checkpoints/best_rlhf_model_2/**
-!checkpoints/task5/int8_dynamics/**
+!checkpoints/best_rlhf_model/
+!checkpoints/best_rlhf_model/**
+
 outputs/
 final_databases/
 experiments/v1_codet5_rlhf/adapter_model.bin
