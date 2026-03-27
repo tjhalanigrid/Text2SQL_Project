@@ -22,7 +22,7 @@ Multiple transformer architectures were evaluated to understand how **different 
 Try the interactive Text-to-SQL system here:
 
  **Gradio Demo**  
-https://huggingface.co/spaces/tjhalanigrid/text2sql-demo
+https://huggingface.co/spaces/tjhalani/text2sql_final_space
 
 The demo allows users to:
 
