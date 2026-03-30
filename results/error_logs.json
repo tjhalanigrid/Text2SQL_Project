@@ -1839,5 +1839,69 @@
     "error_type": "wrong_table",
     "eval_type": "constrained",
     "timestamp": 1774853312.108864
+  },
+  {
+    "question": "What are all the song names by singers who are older than average?",
+    "sql": "select song_name from singer where age  <  (select avg from singer)",
+    "error": "no such column: avg",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774888157.665941
+  },
+  {
+    "question": "What is the average and maximum capacities for all stadiums ?",
+    "sql": "select avg,  max(capacity) from stadium",
+    "error": "no such column: avg",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774888163.1248808
+  },
+  {
+    "question": "What is the name and capacity for the stadium with highest average attendance?",
+    "sql": "select name,  capacity from stadium order by avg desc limit 1",
+    "error": "no such column: avg",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774888164.441772
+  },
+  {
+    "question": "What is the name and capacity for the stadium with the highest average attendance?",
+    "sql": "select name,  capacity from stadium order by avg desc limit 1",
+    "error": "no such column: avg",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774888165.936244
+  },
+  {
+    "question": "Show names for all stadiums except for stadiums having a concert in year 2014.",
+    "sql": "SELECT * FROM stadium except SELECT * FROM concert join stadium on concert.stadium_id  =  stadium.stadium_id where concert.year  =  2014",
+    "error": "SELECTs to the left and right of EXCEPT do not have the same number of result columns",
+    "error_type": "other",
+    "eval_type": "unconstrained",
+    "timestamp": 1774888177.985215
+  },
+  {
+    "question": "List singer names and number of concerts for each singer.",
+    "sql": "SELECT * FROM concert_singer join singer on concert.concert_id  =  singer.singer_id group by concert.singer_id",
+    "error": "no such table: concert_singer",
+    "error_type": "wrong_table",
+    "eval_type": "unconstrained",
+    "timestamp": 1774888183.574753
+  },
+  {
+    "question": "List all singer names in concerts in year 2014.",
+    "sql": "select name from singer_in_concert where year  =  2014",
+    "error": "no such column: name",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774888185.4080691
+  },
+  {
+    "question": "what is the name and nation of the singer who have a song having 'Hey' in its name?",
+    "sql": "select name,  nation from singer where song_name  =  'hey'",
+    "error": "no such column: nation",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774888189.017466
   }
 ]

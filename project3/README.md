@@ -251,14 +251,8 @@ Text2SQL_Project/
 - Python 3.10+
 - macOS/Linux (MPS/CUDA/CPU supported)
 
-### Install dependencies
-```bash
-python -m pip install -r requirement.txt
-```
-### Activate environment
-```bash
-source venv/bin/activate
-```
+
+
 ### ⚡ Quick Start (New Machine)
 ### 1. Clone repo
 ```bash
@@ -268,18 +262,15 @@ cd Text2SQL_Project
 ### 2. Setup environment
 ```bash 
 python3 -m venv venv
-source venv/bin/activate
+source venv/bin/activate   
 pip install --upgrade pip setuptools wheel
 pip install -r requirement.txt
 ```
 ### 🧠 Task 5 (IMPORTANT - Required before running app)
 ```bash
-Export models
-python scripts/quantize_export.py --base_model "Salesforce/codet5-base" --out_dir checkpoints/task5/fp32 --mode fp32 --device cpu
-
-python scripts/quantize_export.py --base_model "Salesforce/codet5-base" --out_dir checkpoints/task5/int8_dynamic --mode int8_dynamic --device cpu
-
-python scripts/quantize_export.py --base_model "Salesforce/codet5-base" --out_dir checkpoints/task5/int8_decoder_dynamic --mode int8_decoder_dynamic --device cpu
+python -m scripts.quantize_export --base_model "Salesforce/codet5-base" --out_dir checkpoints/task5/fp32 --mode fp32 --device cpu
+python -m scripts.quantize_export --base_model "Salesforce/codet5-base" --out_dir checkpoints/task5/int8_dynamic --mode int8_dynamic --device cpu
+python -m scripts.quantize_export --base_model "Salesforce/codet5-base" --out_dir checkpoints/task5/int8_decoder_dynamic --mode int8_decoder_dynamic --device cpu
 ```
 
 ### ▶️ Run App
@@ -319,9 +310,9 @@ python project3/eval_task4_rewards.py \
 ```
 ### Task 5: Quantization Benchmark
 ```bash
-python scripts/benchmark_quantization.py
-python scripts/quantized_infer_harness.py --model_path checkpoints/task5/int8_dynamic
-python scripts/benchmark_rollout_generation.py
+python -m scripts.quantize_export --base_model "Salesforce/codet5-base" --out_dir checkpoints/task5/fp32 --mode fp32 --device cpu
+python -m scripts.quantize_export --base_model "Salesforce/codet5-base" --out_dir checkpoints/task5/int8_dynamic --mode int8_dynamic --device cpu
+python -m scripts.quantize_export --base_model "Salesforce/codet5-base" --out_dir checkpoints/task5/int8_decoder_dynamic --mode int8_decoder_dynamic --device cpu
 ```
 # 📈 Results Summary
 Model	SFT Accuracy	RLHF Accuracy
@@ -333,20 +324,14 @@ Train larger models (CodeT5+, LLaMA)
 Improve reward shaping
 Better schema linking
 Multi-turn SQL support
+### (on 500 examples and lora is working)
 
-👩‍💻 Author
+---
+### 👩‍💻 Author
 
 Tanisha Jhalani
 Machine Learning & Systems Project
 
 
----
-
-# 💯 What I fixed (so you know)
-- Broken headings ✔️  
-- Code blocks merged properly ✔️  
-- Removed messy inline text ✔️  
-- Clean spacing + readability ✔️  
-- Proper markdown structure ✔️  
 
 ---

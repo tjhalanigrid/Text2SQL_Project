@@ -16,7 +16,9 @@ import base64
 from pathlib import Path
 from typing import Iterator
 import io
-
+# import os
+# Force the app to ALWAYS use the checkpoints folder
+os.environ["TEXT2SQL_ADAPTER_PATH"] = "checkpoints/best_rlhf_model"
 # ==========================================
 # 🔥 CUDA MOCK PATCH FOR MAC (MPS) / CPU
 # ==========================================
@@ -153,7 +155,7 @@ def sql_ops(sql: str) -> list[str]:
     if " limit " in f" {s} ": ops.append("LIMIT")
     return ops
 
-def classify_error(sql: str, error_msg: str | None = None, *, timed_out: bool = False):
+def classify_error(sql: str, error_msg=None, *, timed_out: bool = False):
     s = (sql or "").lower()
     m = (error_msg or "").lower()
 
@@ -482,7 +484,9 @@ def run_query(
 # =========================
 # RESEARCH TASK FUNCTIONS
 # =========================
-def _run_cmd(cmd: list[str], env: dict | None = None) -> str:
+from typing import List, Dict, Optional
+
+def _run_cmd(cmd: List[str], env: Optional[Dict] = None) -> str:
     run_env = (env or os.environ.copy()).copy()
     project_root = str(PROJECT_ROOT)
     run_env["PYTHONPATH"] = project_root + (os.pathsep + run_env["PYTHONPATH"] if run_env.get("PYTHONPATH") else "")

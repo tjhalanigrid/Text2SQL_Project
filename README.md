@@ -111,7 +111,9 @@ Text2SQL_Project
 │
 ├── experiments/              # Best model checkpoints and experiment configurations
 │
-├── scripts                   # for evaluation of final model              
+├── scripts                   # for evaluation of final model  
+| 
+├── project3                  # Project3 readme and scripts 
 │
 ├── app.py                    # Gradio interactive demo (Natural Language → SQL)
 │
@@ -166,64 +168,75 @@ Text2SQL_Project
 
 - `pred.sql`  
   Generated prediction file produced by evaluation scripts (run artifact; may be regenerated).
+- `project3`  
+  dedicated folder for project 3 and it's readme file 
 
 - `requirment.txt`  
   Python dependency list used for environment setup.
+----
+----
 
----
-
-##  Installation & Setup
+## ⚙️ Setup Instructions
 
 ### Prerequisites
-
 - Python 3.10+
-- macOS/Linux (MPS/CUDA/CPU supported via PyTorch setup)
-
-### Install dependencies
-
-```bash
-python -m pip install -r requirment.txt
-```
-
-### Activate venv (recommended)
-
-```bash
-source venv/bin/activate
-```
-
-## ⚡ Run On Another Computer (Quick Start)
-
-Use these exact commands on a fresh machine.
-
-### 1. Clone and enter project
-
+- macOS/Linux (MPS/CUDA/CPU supported)
+### ⚡ Quick Start (New Machine)
+### 1. Clone repo
 ```bash
 git clone https://github.com/tjhalanigrid/Text2SQL_Project.git
 cd Text2SQL_Project
 ```
-
-### 2. Create environment and install dependencies
-
-```bash
+### 2. Setup environment
+```bash 
 python3 -m venv venv
-source venv/bin/activate
-python -m pip install --upgrade pip setuptools wheel
-python -m pip install -r requirment.txt
+source venv/bin/activate   
+pip install --upgrade pip setuptools wheel
+pip install -r requirement.txt
+```
+### 🧠 Task 5 (IMPORTANT - Required before running app)
+```bash
+python -m scripts.quantize_export --base_model "Salesforce/codet5-base" --out_dir checkpoints/task5/fp32 --mode fp32 --device cpu
+python -m scripts.quantize_export --base_model "Salesforce/codet5-base" --out_dir checkpoints/task5/int8_dynamic --mode int8_dynamic --device cpu
+python -m scripts.quantize_export --base_model "Salesforce/codet5-base" --out_dir checkpoints/task5/int8_decoder_dynamic --mode int8_decoder_dynamic --device cpu
 ```
 
-### 3. Run UI directly (no retraining required)
-
+### ▶️ Run App
 ```bash
 export TEXT2SQL_ADAPTER_PATH=checkpoints/best_rlhf_model
 python app.py
 ```
-
-### 4. Rebuild and open analytics dashboard
-
+#### (Task 1 ,2 ,3 ,4 , 5 is integrated with app.py)
+### 📊 Analytics Dashboard
 ```bash
 python comparison_plots/parse_and_plot.py --window 7
 open docs/index.html
 ```
+
+### 🔬 Project 3 Tasks
+### Task 1: Parallel Execution
+```bash 
+python project3/benchmark_parallel_reward.py
+```
+
+### Task 2: Error Dashboard
+```bash
+python scripts/error_dashboard.py
+```
+### Task 3: Constrained Decoding
+```bash
+python project3/eval_with_without_constraints.py \
+  --adapter_unconstrained checkpoints/best_rlhf_model \
+  --adapter_constrained checkpoints/best_rlhf_model_2
+```
+
+### Task 4: Reward Comparison
+```bash
+python project3/eval_task4_rewards.py \
+  --adapter_hard checkpoints/best_rlhf_model \
+  --adapter_soft checkpoints/best_rlhf_model_2
+```
+
 
 ### Notes for new users
 
@@ -235,15 +248,15 @@ open docs/index.html
   - `export TEXT2SQL_ADAPTER_PATH=experiments/v1_codet5_rlhf/best_rlhf_model`
 - Runtime artifacts are written under `outputs/` and `comparison_plots/`.
 
-### If you already cloned before updates
-
+### Task 5: Quantization Benchmark
 ```bash
-cd Text2SQL_Project
-git pull
-source venv/bin/activate
-export TEXT2SQL_ADAPTER_PATH=checkpoints/best_rlhf_model
-python app.py
+python -m scripts.quantize_export --base_model "Salesforce/codet5-base" --out_dir checkpoints/task5/fp32 --mode fp32 --device cpu
+python -m scripts.quantize_export --base_model "Salesforce/codet5-base" --out_dir checkpoints/task5/int8_dynamic --mode int8_dynamic --device cpu
+python -m scripts.quantize_export --base_model "Salesforce/codet5-base" --out_dir checkpoints/task5/int8_decoder_dynamic --mode int8_decoder_dynamic --device cpu
 ```
+----
+----
+
 
 ### Troubleshooting
 
@@ -273,38 +286,156 @@ python app.py
 ---
 
 ##  Core Tasks
+## 📌 Project Tasks Breakdown
 
-🔹 **Task 1: Data preparation**
-- Prepare Spider JSON and SQLite artifacts needed for training and evaluation.
-- Validate schema/database paths and ensure required DBs exist locally.
-- Build clean prompt-ready examples for SFT and RLHF pipelines.
+---
 
-🔹 **Task 2: Train and run Text-to-SQL inference**
-- Fine-tune SFT models and RLHF models.
-- Generate SQL from natural language questions for selected Spider databases.
-- Execute generated SQL safely and return result tables.
+### 🔹 Task 1: Data Preparation
 
-🔹 **Task 3: Run controlled model comparisons**
-- Compare SFT vs RLHF checkpoints.
-- Compare model families (T5, BART, CodeT5) using the same evaluation flow.
+- Prepare Spider JSON and SQLite artifacts needed for training and evaluation  
+- Validate schema/database paths and ensure required DBs exist locally  
+- Build clean prompt-ready examples for SFT and RLHF pipelines  
 
-🔹 **Task 4: Evaluate quality with benchmark metrics**
-- Measure execution accuracy and exact match using Spider evaluation.
-- Track per-model performance and aggregate comparison artifacts.
+---
 
-🔹 **Task 5: Presentation layer**
-- Launch interactive Gradio demo for natural language to SQL.
-- Regenerate plots and documentation visuals for reporting.
+### 🔹 Task 2: Train and Run Text-to-SQL Inference
+
+- Fine-tune SFT and RLHF models  
+- Generate SQL from natural language questions  
+- Execute SQL safely and return result tables  
+
+---
+
+### 🔹 Task 3: Run Controlled Model Comparisons
+
+- Compare SFT vs RLHF checkpoints  
+- Compare model families (T5, BART, CodeT5)  
+- Use consistent evaluation pipelines  
+
+---
+
+### 🔹 Task 4: Evaluate Quality with Benchmark Metrics
+
+- Measure execution accuracy and exact match (Spider evaluation)  
+- Track per-model performance  
+- Generate aggregate comparison artifacts  
+
+---
+
+### 🔹 Task 5: Presentation Layer
+
+- Launch interactive Gradio demo  
+- Regenerate plots and documentation visuals  
+
+---
+
+## 🚀 Advanced Optimization Tasks (Project 3)
+
+---
+
+### 🔹 Task 1: Parallel SQL Execution with Connection Pooling
+
+**Instructions:**
+- Use `ThreadPoolExecutor` for parallel SQLite execution (10–20 DBs concurrently)  
+- Implement connection pooling to reuse SQLite connections  
+- Add query timeout (2s) with safe exception handling  
+- Cache query results using hash (query + DB state)  
+- Measure execution time: sequential vs parallel (100 rollouts)  
+- Profile CPU usage and identify bottlenecks  
+
+**Benefit:**  
+🚀 Reduces reward computation bottleneck by **5–10×** and enables larger batch sizes  
+
+---
+
+### 🔹 Task 2: Execution-Guided Reward Attribution & Error Analysis
+
+**Instructions:**
+- Capture and classify SQL errors (JOIN, WHERE, NULL handling, etc.)  
+- Use attribution methods to identify prompt tokens causing errors  
+- Build error dashboard: type → count → examples → fixes  
+- Implement reward-based hint mechanism  
+- Create adversarial test cases  
+- Visualize performance across SQL operations  
+
+**Benefit:**  
+📊 Improves interpretability and enables targeted debugging & reward shaping  
+
+---
+
+### 🔹 Task 3: Schema-Aware Constrained Decoding
+
+**Instructions:**
+- Parse schema into graph (tables, columns, relationships)  
+- Enforce valid SQL generation using constraints  
+- Apply grammar-based decoding rules  
+- Mask invalid tokens during generation  
+- Measure constraint satisfaction rate  
+- Compare constrained vs unconstrained decoding  
+
+**Benefit:**  
+🧠 Reduces invalid SQL and improves semantic correctness  
+
+---
+
+### 🔹 Task 4: Execution Reward vs Soft Reward Comparison
+
+**Instructions:**
+- Implement:
+  - Hard reward → exact execution match  
+  - Soft reward → partial row match  
+- Train models under both reward schemes  
+- Compare convergence, variance, accuracy  
+- Analyze interpretability and stability  
+
+**Benefit:**  
+⚖️ Soft rewards provide denser signals → better training stability  
+
+---
+
+### 🔹 Task 5: Quantized SQL Code Model for Efficient Inference
+
+**Instructions:**
+- Quantize models (T5 / CodeT5) to INT8 / INT4  
+- Compare performance: fp32 vs int8 vs int4  
+- Use mixed precision (encoder fp32, decoder int8)  
+- Build lightweight CPU model (<300MB)  
+- Benchmark rollout + inference speed  
+- Deploy optimized inference pipeline  
+
+**Benefit:**  
+⚡ Faster inference + efficient deployment on CPU (Mac-friendly)  
 
 ---
 
 ##  Key Results Snapshot
 
-- Best model family in this project: **CodeT5-Base**.
-- Best reported SFT execution accuracy: **41.7%**.
-- Best reported RLHF execution accuracy: **37.9%**.
-- RLHF improved semantic behavior in manual checks while execution accuracy varied by model.
+## 📈 Results Summary
 
+> *(Evaluated on 500 examples. LoRA applied for best-performing model checkpoints.)*  
+> ⚠️ *Note: The reported results correspond to the best-performing model and configuration in this project. Performance may vary across different runs, models, and datasets.*
+
+| Model         | SFT Accuracy | RLHF Accuracy |
+|--------------|------------|--------------|
+| T5-Small     | 9.0%       | 8.3%         |
+| BART-Base    | 24.0%      | 21.23%       |
+| CodeT5-Base  | 41.7%      | 37.9%        |
+
+### 🏆 Key Observations
+
+- Best model family in this project: **CodeT5-Base**  
+- Best reported SFT execution accuracy: **41.7%**  
+- Best reported RLHF execution accuracy: **37.9%**  
+- RLHF improved semantic behavior in manual checks, although execution accuracy varied across models  
+
+---
+
+## 🔮 Future Improvements
+
+- Train larger models (CodeT5+, LLaMA)  
+- Improve reward shaping strategies  
+- Enhance schema linking techniques  
+- Support multi-turn conversational SQL  
 ---
 
 ##  Training & Inference
@@ -371,7 +502,7 @@ open docs/index.html
 ##  Recommended Production Config
 
 Use this for stable deployment:
-- model/adapter: `checkpoints/best_rlhf_model`
+- model/adapter: `checkpoints/best_rlhf_model_2`
 - base model: `Salesforce/codet5-base`
 - decoding mode: deterministic (`do_sample=False`, beam search)
 - safety: SQL validation enabled in `src/sql_validator.py`
