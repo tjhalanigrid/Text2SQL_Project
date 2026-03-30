@@ -18,3 +18,13 @@ datasets>=2.18.0
 pandas>=2.0.0
 numpy>=1.24.0
 matplotlib>=3.7.0
+
+# Visualization & Logging (Required for Task 4 & 5 analysis)
+plotly>=5.18.0
+seaborn>=0.13.0
+wandb>=0.16.0
+tensorboard>=2.16.0
+
+# Profiling & CLI Utils
+psutil>=5.9.0
+tqdm>=4.66.0
