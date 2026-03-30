@@ -1,181 +1,6 @@
-<!-- # Project 3: Optimization & Advanced RL Enhancements for Text-to-SQL
-
-## Live Links
-
-Technical Report:
-https://tjhalanigrid.github.io/text2sql_2/
-
-Live Demo:
-https://huggingface.co/spaces/tjhalanigrid/text2sql-demo
-
----
-
-## Overview
-
-This module extends the base Text-to-SQL system by introducing system-level optimizations, reinforcement learning improvements, and deployment-focused enhancements.
-
-The goal is to transform a slow, error-prone baseline into a scalable, schema-aware, and efficient inference system suitable for real-world deployment.
-
----
-
-## Key Results
-
-- Achieved over **5× speedup** in SQL execution using parallelization and caching  
-- Improved execution accuracy to **~44%** using soft reward shaping  
-- Generated **~70%+ schema-valid SQL** via constrained decoding  
-- Identified majority of errors as schema-related → guided constraint design  
-- Achieved **~2× latency reduction** using INT8 quantization  
-- Reduced reward variance → more stable RL training  
-
----
-
-## Model Checkpoint Setup
-
-To run this project locally, first clone the project from the main repository and download the trained model checkpoint.
-
-### Step 1: Download Checkpoint
-
-https://drive.google.com/drive/folders/1DrsGSO6sHMuX1h2yozqtzWlLqbIXMLVH?usp=sharing
-
----
-
-### Step 2: Place in Project Directory
-
-
-project_root/
-│
-├── checkpoints/
-│ └── <model_files_here>
-
-
-If the `checkpoints/` folder does not exist, create it manually.
-
----
-
-### Step 3: Verify Structure
-
-
-project_root/
-│
-├── app.py
-├── checkpoints/
-│ ├── config.json
-│ ├── pytorch_model.bin
-│ ├── tokenizer.json
-│ └── ...
-
-
----
-
-### Important Notes
-
-- Do **not rename any files**  
-- Ensure all required files are present  
-- Incorrect paths will cause model loading failure  
-
----
-
-## Key Contributions
-
-### Task 1: Parallel SQL Execution Optimization
-- Multi-threaded rollout execution using ThreadPoolExecutor  
-- Connection pooling and query caching  
-- Reduced database I/O bottlenecks  
-
-### Task 2: Execution Error Diagnostics & Telemetry
-- Built error classification system (wrong_column, wrong_table, etc.)  
-- Identified schema hallucination as a dominant failure mode  
-- Developed clause-level error analysis  
-
-### Task 3: Schema-Aware Constrained Decoding
-- Logit masking using schema constraint graph  
-- Prevented invalid table/column generation  
-- Improved execution correctness  
-
-### Task 4: Soft Reward Shaping
-- Introduced dense reward for partial correctness  
-- Improved execution accuracy and training stability  
-- Reduced reward variance  
-
-### Task 5: Quantized Inference Benchmarking
-- Applied INT8 dynamic quantization for CPU deployment  
-- Used mixed precision (decoder-focused quantization)  
-- Reduced inference latency without significant accuracy loss  
-
----
-
-## Results Summary
-
-| Metric | Baseline | Optimized |
-|--------|---------|----------|
-| Execution Speed | ~1.6s | ~0.3s |
-| Execution Accuracy | ~38% | ~44% |
-| Schema Validity | Low | ~70%+ |
-| Inference Latency | ~3s | ~1.6s |
- (based on random split and best epoch )
- - for better result please refer report - https://tjhalanigrid.github.io/text2sql_2/
- 
-
----
-
-## Core Implementation Mapping (Tasks 1–5)
-
-### Task 01: Parallel SQL Execution
-- execution_reward.py → Parallel rollout and reward logic  
-- run_sql.py → SQL execution and timeout handling  
-- scripts/benchmark_parallel_reward.py → Benchmarking  
-
-### Task 02: Error Diagnostics
-- sql_validator.py → SQL validation and error detection  
-- execution_reward.py → Runtime error capture  
-- app.py → Error classification logic  
-
-### Task 03: Constrained Decoding
-- constrained_decoding.py → Logits masking  
-- schema_constraints.py → Schema rules  
-- schema_encoder.py → Schema representation  
-
-### Task 04: Reward Design
-- execution_reward.py → Hard reward  
-- execution_reward_soft.py → Soft reward  
-- train_rl_codet5_reward_soft.py → Training  
-
-### Task 05: Quantization
-- quantization_utils.py → INT8 quantization  
-- quantized_text2sql_engine.py → Inference engine  
-- scripts/quantize_export.py → Export  
-
----
-
-## Key Improvements Over Base System
-
-- Eliminated SQL execution bottlenecks  
-- Reduced schema hallucination errors  
-- Stabilized RL training with dense rewards  
-- Improved execution accuracy  
-- Enabled efficient CPU deployment  
-
----
-
-## Future Work
-
-- Scale to larger models (CodeT5+, LLaMA, Mistral)  
-- Integrate RAG for large schemas  
-- Support multi-turn conversational SQL  
-- Further refine reward shaping strategies  
-
----
-
-## Author
-
-Tanisha Jhalani  
-Machine Learning & Systems Engineering -->
-
-
 # Text-to-SQL using SFT + RLHF (Spider Benchmark)
 
-## Project Overview
-
+##  Project Overview
 This project implements a **cross-domain Text-to-SQL system** trained on the **Spider benchmark dataset**.
 
 The system converts **natural language questions into executable SQL queries** across multiple relational databases.
@@ -191,68 +16,186 @@ Improves logical correctness by rewarding queries that return correct results wh
 Multiple transformer architectures were evaluated to understand how **different pretraining strategies affect structured SQL generation**.
 
 ---
-
 ## 🚀 Live Demo
 
-**Gradio Demo:**  
-https://huggingface.co/spaces/tjhalanigrid/text2sql-demo
+Experience the interactive **Text-to-SQL system** in action:
 
-Features:
-- Enter **natural language questions**
-- Generate **SQL queries automatically**
-- Execute queries on **SQLite databases**
-- View **result tables**
+🔗 **Gradio Demo**
+https://huggingface.co/spaces/tjhalani/text2sql_final_space
 
----
+### 💡 What You Can Do
 
+The demo enables users to:
+
+* Enter **natural language questions**
+* Automatically generate **SQL queries**
+* View the **generated SQL query**
+* Execute queries on a **SQLite database**
+* Display the **resulting table output**
+
+### 🖼️ Demo Screenshots
+
+For a better understanding of the system workflow, refer to the following screenshots:
+
+* `text2sql_project/project3/deployed1.png`
+* `text2sql_project/project3/deployed2.png`
+* `text2sql_project/project3/deployed3.png`
 ## 📄 Project Reports
 
-**Report 2:**  
-https://tjhalanigrid.github.io/Text2SQL_Project/
+### 🔹 Project Report 2
 
-**Report 3:**  
-https://tjhalanigrid.github.io/text2sql_2/
+A comprehensive report covering system design, training, and evaluation:
+
+🔗 https://tjhalanigrid.github.io/Text2SQL_Project/
+📂 Alternative: `docs/index.html`
+
+#### 📌 Highlights
+
+* System architecture overview
+* Training pipeline (**SFT + RLHF**)
+* Model comparison (T5, BART, CodeT5)
+* Execution accuracy evaluation (Spider benchmark)
+* Reinforcement learning insights
+* Training curves and visualizations
+* Demo screenshots
 
 ---
 
-## ✨ Features
+### 🔹 Project Report 3
 
-- Multi-model experimentation (T5, BART, CodeT5)
-- Execution-based RL training
-- Schema-aware prompting
-- Spider-style evaluation pipeline
-- Interactive Gradio interface
+An advanced technical report focusing on optimization and deployment improvements:
+
+🔗 https://tjhalanigrid.github.io/text2sql_2/
+📂 Alternative: `project3/report.html`
+
+#### 🚀 Highlights
+
+* Parallel SQL execution (**~5.6× speedup**)
+* Execution error analysis with telemetry dashboard
+* Schema-aware constrained decoding
+* Hard vs Soft reward comparison in RL
+* Quantized inference benchmarking (**INT8, mixed precision**)
+* System-level performance optimization
+* End-to-end evaluation and insights
 
 ---
 
-## 📁 Project Structure
+### ⚠️ Important Note
+
+* Performance results may vary depending on dataset splits, model configurations, and hardware setup
+* Reported improvements are based on controlled experiments under selected best-performing conditions
 
 
-Text2SQL_Project/
+##  Features
+
+- **Multi-Model Experimentation**  
+  Experiments with **T5-Small, BART-Base, and CodeT5-Base**
+
+- **Execution-Based Reinforcement Learning**  
+  SQL queries are executed against SQLite databases and rewarded based on correctness.
+
+- **Schema-Aware Prompting**  
+  Database schemas are serialized to improve grounding.
+
+- **Evaluation Pipeline**  
+  Includes Spider-style execution accuracy evaluation.
+
+- **Interactive Demo Interface**  
+  Natural language → SQL → database results using Gradio.
+
+---
+
+##  Project Structure
+
+```
+Text2SQL_Project
 │
-├── src/ # Core logic
-├── data/ # Spider dataset & DBs
-├── outputs/ # RLHF outputs
-├── comparison_plots/ # Graphs
-├── docs/ # Reports
-├── spider_eval/ # Evaluation scripts
-├── checkpoints/ # Models
-├── experiments/ # Experiments
-├── scripts/ # Utility scripts
-├── app.py # Demo app
-└── README.md
-
+├── src/                      # Core training, evaluation and inference utilities
+│
+├── data/                     # Spider dataset and SQLite databases
+│
+├── outputs/                  # RLHF outputs, logs and training checkpoints
+│
+├── comparison_plots/         # Training curve visualizations and performance graphs
+│
+├── docs/                     # HTML report, figures and project documentation
+│
+├── spider_eval/              # Official Spider evaluation scripts
+│
+├── checkpoints/              # All models checkpoints 
+│
+├── experiments/              # Best model checkpoints and experiment configurations
+│
+├── scripts                   # for evaluation of final model  
+| 
+├── project3                  # Project3 readme and scripts 
+│
+├── app.py                    # Gradio interactive demo (Natural Language → SQL)
+│
+└── README.md                 # Complete project documentation
+```
 
 ---
+
+##  Repository Files & Folders (Detailed)
+
+- `.vscode/`  
+  Local editor settings for VS Code (workspace preferences, optional).
+
+- `checkpoints/`  
+  Saved LoRA adapters and model checkpoints used by training/evaluation (`best_rlhf_model`, SFT/RL snapshots).
+
+- `comparison_plots/`  
+  Parsed metrics JSON/CSV and generated model comparison plots.
+
+- `data/`  
+  Spider data artifacts, evaluation files (`dev.json`, `tables.json`, gold SQL), and selected SQLite databases.
+
+- `docs/`  
+  Static project report site files (HTML, CSS, images/figures).
+
+- `experiments/v1_codet5_rlhf/`  
+  Experiment-specific RLHF assets/config/results for CodeT5 pipeline.
+
+- `outputs/`  
+  Intermediate and epoch-wise output artifacts from training/evaluation runs.
+
+- `scripts/`  
+  Utility scripts for evaluation and report/plot generation.
+
+- `spider_eval/`  
+  Official Spider evaluation utilities used for exact/execution metrics.
+
+- `src/`  
+  Main source code: training, RLHF, inference engine, evaluation, prompt/schema helpers.
+
+- `.gitignore`  
+  Git tracking rules for local artifacts, checkpoints, and selected include/exclude paths.
+
+- `.nojekyll`  
+  Ensures GitHub Pages serves files without Jekyll processing.
+
+- `README.md`  
+  Project documentation (setup, run commands, evaluation, troubleshooting).
+
+- `app.py`  
+  Gradio UI entrypoint for Text-to-SQL demo (question -> SQL -> execution results).
+
+- `pred.sql`  
+  Generated prediction file produced by evaluation scripts (run artifact; may be regenerated).
+- `project3`  
+  dedicated folder for project 3 and it's readme file 
+
+- `requirment.txt`  
+  Python dependency list used for environment setup.
+
+----
 
 ## ⚙️ Setup Instructions
 
 ### Prerequisites
 - Python 3.10+
 - macOS/Linux (MPS/CUDA/CPU supported)
-
-
-
 ### ⚡ Quick Start (New Machine)
 ### 1. Clone repo
 ```bash
@@ -278,7 +221,7 @@ python -m scripts.quantize_export --base_model "Salesforce/codet5-base" --out_di
 export TEXT2SQL_ADAPTER_PATH=checkpoints/best_rlhf_model
 python app.py
 ```
-
+#### (Task 1 ,2 ,3 ,4 , 5 is integrated with app.py)
 ### 📊 Analytics Dashboard
 ```bash
 python comparison_plots/parse_and_plot.py --window 7
@@ -308,30 +251,386 @@ python project3/eval_task4_rewards.py \
   --adapter_hard checkpoints/best_rlhf_model \
   --adapter_soft checkpoints/best_rlhf_model_2
 ```
+
+
+### Notes for new users
+
+- If adapter files are present in `checkpoints/best_rlhf_model`, UI uses them.
+- If not, app automatically falls back to:
+  - `experiments/v1_codet5_rlhf/best_rlhf_model`
+  - then base model (no LoRA) if adapter is unavailable.
+- You can force adapter path with:
+  - `export TEXT2SQL_ADAPTER_PATH=experiments/v1_codet5_rlhf/best_rlhf_model`
+- Runtime artifacts are written under `outputs/` and `comparison_plots/`.
+
 ### Task 5: Quantization Benchmark
 ```bash
 python -m scripts.quantize_export --base_model "Salesforce/codet5-base" --out_dir checkpoints/task5/fp32 --mode fp32 --device cpu
 python -m scripts.quantize_export --base_model "Salesforce/codet5-base" --out_dir checkpoints/task5/int8_dynamic --mode int8_dynamic --device cpu
 python -m scripts.quantize_export --base_model "Salesforce/codet5-base" --out_dir checkpoints/task5/int8_decoder_dynamic --mode int8_decoder_dynamic --device cpu
 ```
-# 📈 Results Summary
-Model	SFT Accuracy	RLHF Accuracy
-T5-Small	9.0%	8.3%
-BART-Base	24.0%	21.23%
-CodeT5-Base	41.7%	37.9%
-🔮 Future Improvements
-Train larger models (CodeT5+, LLaMA)
-Improve reward shaping
-Better schema linking
-Multi-turn SQL support
-### (on 500 examples and lora is working)
+
+----
+
+
+### Troubleshooting
+
+1. `PermissionError` from `/opt/miniconda3/bin/pip`
+   Use venv pip only:
+   ```bash
+   source venv/bin/activate
+   python -m pip install -r requirment.txt
+   ```
+2. Adapter path / `HFValidationError`
+   Set adapter path explicitly:
+   ```bash
+   export TEXT2SQL_ADAPTER_PATH=checkpoints/best_rlhf_model
+   python app.py
+   ```
+3. `unable to open database file`
+   Ensure DB file exists for selected DB (example `chinook_1`):
+   ```bash
+   ls data/database/chinook_1/chinook_1.sqlite
+   ```
+4. LoRA not loading (`Can't find weights...adapter_model.bin`)
+   Verify adapter weights exist:
+   ```bash
+   ls checkpoints/best_rlhf_model/adapter_model.bin
+   ```
 
 ---
-### 👩‍💻 Author
 
-Tanisha Jhalani
+##  Core Tasks
+
+## 📌 Project Tasks Breakdown
+---
+## 📌 Project Tasks Overview
+
+### 🔹 Task 1: Data Preparation
+
+* Prepared Spider dataset (JSON + SQLite) for training and evaluation
+* Validated schema paths and ensured all required databases are accessible
+* Built clean, prompt-ready examples for both **SFT** and **RLHF** pipelines
+
+📊 Plot: `result/task1_plot.png`
+
+> *Note: Results are based on random data splits and best-performing epoch/model selection.*
+
+---
+
+### 🔹 Task 2: Training & Inference
+
+* Fine-tuned models using **Supervised Fine-Tuning (SFT)** and **RLHF**
+* Generated SQL queries from natural language inputs
+* Executed SQL queries safely on SQLite databases
+* Returned structured result tables
+
+📊 Plot: `project3/task2.png`
+
+> *Note: Performance may vary depending on dataset splits, examples, and model configurations.*
+
+---
+
+### 🔹 Task 3: Controlled Model Comparison
+
+* Compared **SFT vs RLHF** checkpoints
+* Evaluated different model families: **T5, BART, CodeT5**
+* Ensured consistent evaluation pipelines for fair comparison
+
+📊 Plot: `project3/task3.png`
+
+> *Note: Results depend on random splits, selected best model, and LoRA adaptation. Performance may vary significantly without these conditions.*
+
+---
+
+### 🔹 Task 4: Evaluation with Benchmark Metrics
+
+* Evaluated models using **Spider benchmark metrics**
+* Measured:
+
+  * Execution Accuracy
+  * Exact Match Accuracy
+* Generated aggregated performance comparisons
+
+📊 Plot: `project3/task4.png`
+
+> *Note: Results are influenced by random splits, best model selection, and LoRA tuning.*
+
+---
+
+### 🔹 Task 5: Presentation Layer
+
+* Developed an interactive **Gradio-based UI**
+* Enabled real-time Text-to-SQL generation and execution
+* Integrated plots and visual outputs for better interpretability
+--- 
+
+## 🚀 Advanced Optimization Tasks (Project 3)
+
+---
+
+### 🔹 Task 1: Parallel SQL Execution with Connection Pooling
+
+**Instructions:**
+- Use `ThreadPoolExecutor` for parallel SQLite execution (10–20 DBs concurrently)  
+- Implement connection pooling to reuse SQLite connections  
+- Add query timeout (2s) with safe exception handling  
+- Cache query results using hash (query + DB state)  
+- Measure execution time: sequential vs parallel (100 rollouts)  
+- Profile CPU usage and identify bottlenecks  
+
+**Benefit:**  
+🚀 Reduces reward computation bottleneck by **5–10×** and enables larger batch sizes  
+
+---
+
+### 🔹 Task 2: Execution-Guided Reward Attribution & Error Analysis
+
+**Instructions:**
+- Capture and classify SQL errors (JOIN, WHERE, NULL handling, etc.)  
+- Use attribution methods to identify prompt tokens causing errors  
+- Build error dashboard: type → count → examples → fixes  
+- Implement reward-based hint mechanism  
+- Create adversarial test cases  
+- Visualize performance across SQL operations  
+
+**Benefit:**  
+📊 Improves interpretability and enables targeted debugging & reward shaping  
+
+---
+
+### 🔹 Task 3: Schema-Aware Constrained Decoding
+
+**Instructions:**
+- Parse schema into graph (tables, columns, relationships)  
+- Enforce valid SQL generation using constraints  
+- Apply grammar-based decoding rules  
+- Mask invalid tokens during generation  
+- Measure constraint satisfaction rate  
+- Compare constrained vs unconstrained decoding  
+
+**Benefit:**  
+🧠 Reduces invalid SQL and improves semantic correctness  
+
+---
+
+### 🔹 Task 4: Execution Reward vs Soft Reward Comparison
+
+**Instructions:**
+- Implement:
+  - Hard reward → exact execution match  
+  - Soft reward → partial row match  
+- Train models under both reward schemes  
+- Compare convergence, variance, accuracy  
+- Analyze interpretability and stability  
+
+**Benefit:**  
+⚖️ Soft rewards provide denser signals → better training stability  
+
+---
+
+### 🔹 Task 5: Quantized SQL Code Model for Efficient Inference
+
+**Instructions:**
+- Quantize models (T5 / CodeT5) to INT8 / INT4  
+- Compare performance: fp32 vs int8 vs int4  
+- Use mixed precision (encoder fp32, decoder int8)  
+- Build lightweight CPU model (<300MB)  
+- Benchmark rollout + inference speed  
+- Deploy optimized inference pipeline  
+
+**Benefit:**  
+⚡ Faster inference + efficient deployment on CPU (Mac-friendly)  
+
+---
+
+##  Key Results Snapshot
+
+## 📈 Results Summary
+
+> *(Evaluated on 500 examples. LoRA applied for best-performing model checkpoints.)*  
+> ⚠️ *Note: The reported results correspond to the best-performing model and configuration in this project. Performance may vary across different runs, models, and datasets.*
+
+| Model         | SFT Accuracy | RLHF Accuracy |
+|--------------|------------|--------------|
+| T5-Small     | 9.0%       | 8.3%         |
+| BART-Base    | 24.0%      | 21.23%       |
+| CodeT5-Base  | 41.7%      | 37.9%        |
+
+### 🏆 Key Observations
+
+- Best model family in this project: **CodeT5-Base**  
+- Best reported SFT execution accuracy: **41.7%**  
+- Best reported RLHF execution accuracy: **37.9%**  
+- RLHF improved semantic behavior in manual checks, although execution accuracy varied across models  
+
+---
+
+## 🔮 Future Improvements
+
+- Train larger models (CodeT5+, LLaMA)  
+- Improve reward shaping strategies  
+- Enhance schema linking techniques  
+- Support multi-turn conversational SQL  
+---
+
+##  Training & Inference
+
+### Train
+
+```bash
+python src/train_sft.py
+python src/train_sft_codet5.py
+python src/train_sft_bart.py
+python src/train_rl.py
+python src/train_rl_codet5.py
+python src/train_rl_bart.py
+```
+
+### Inference (example)
+
+```bash
+python src/generate_sql.py \
+  --question "Show the names of employees who live in Calgary" \
+  --db_id chinook_1
+```
+
+
+---
+
+
+
+
+## 🖥️ Gradio UI (Inference)
+
+Main UI file: `app.py`
+
+Launch locally:
+
+```bash
+python app.py
+```
+
+The UI supports:
+- Natural language question input
+- Database selection
+- Generated SQL display
+- Query execution and tabular results
+
+---
+
+##  Plot Dashboard
+
+Generate/rebuild comparison plots:
+
+```bash
+python comparison_plots/parse_and_plot.py --window 7
+```
+
+Open report/dashboard:
+
+```bash
+open docs/index.html
+```
+
+---
+
+##  Recommended Production Config
+
+Use this for stable deployment:
+- model/adapter: `checkpoints/best_rlhf_model_2`
+- base model: `Salesforce/codet5-base`
+- decoding mode: deterministic (`do_sample=False`, beam search)
+- safety: SQL validation enabled in `src/sql_validator.py`
+
+---
+
+##  Models Evaluated
+
+| Model | Pretraining Type | Parameters |
+|------|------------------|-----------|
+| CodeT5-Base | Code-pretrained transformer | ~220M |
+| T5-Small | General text-to-text transformer | ~60M |
+| T5-Base | General text-to-text transformer | ~220M |
+| BART-Base | Denoising sequence-to-sequence model | ~139M |
+
+**CodeT5 achieved the best performance** because its code-oriented pretraining improves structured SQL generation.
+
+---
+
+##  Results (Execution Accuracy)
+
+| Model | SFT Accuracy | RLHF Accuracy |
+|------|--------------|---------------|
+| T5-Small | 9.0% | 8.3% |
+| BART-Base | 24.0% | 21.23% |
+| CodeT5-Base | **41.7%** | **37.9%** |
+(based on random split and best epoch)
+
+Although RLHF slightly reduced execution accuracy in some cases, it improved **semantic alignment and logical reasoning**, confirmed through manual evaluation.
+
+---
+
+##  Training Pipeline
+
+### Stage 1 — Supervised Fine-Tuning (SFT)
+
+Models are trained using **cross-entropy loss** against ground-truth SQL queries.
+
+---
+
+### Stage 2 — Reinforcement Learning (RLHF / PPO)
+
+The model is further optimized using **execution-based rewards**.
+
+
+---
+
+##  Evaluation
+
+Evaluate execution accuracy using:
+
+
+---
+
+##  Visualization
+
+Generate training curves and comparisons:
+
+
+Generated plots include:
+
+- SFT training accuracy curves
+- RLHF reward progression
+- Cross-model performance comparisons
+
+---
+
+
+
+##  Example Query
+
+Example question you can try:
+
+```
+Show the names of employees who live in Calgary
+```
+
+The system will generate the SQL query and execute it on the database.
+
+---
+
+##  Future Improvements
+
+- Train larger models (**T5-Large, CodeT5+**)
+- Improve reward shaping strategies for RLHF
+- Better schema linking techniques
+- Support multi-turn conversational queries
+- Deploy optimized inference pipeline
+
+---
+
+##  Author
+
+**Tanisha Jhalani**   
 Machine Learning & Systems Project
-
-
-
----

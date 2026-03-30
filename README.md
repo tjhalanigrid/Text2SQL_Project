@@ -16,59 +16,74 @@ Improves logical correctness by rewarding queries that return correct results wh
 Multiple transformer architectures were evaluated to understand how **different pretraining strategies affect structured SQL generation**.
 
 ---
+## 🚀 Live Demo
 
-##  Live Demo
+Experience the interactive **Text-to-SQL system** in action:
 
-Try the interactive Text-to-SQL system here:
-
- **Gradio Demo**  
+🔗 **Gradio Demo**
 https://huggingface.co/spaces/tjhalani/text2sql_final_space
 
-The demo allows users to:
+### 💡 What You Can Do
 
-- Enter **natural language questions**
-- Generate **SQL queries automatically**
-- View the **generated SQL query**
-- Execute queries on **SQLite databases**
-- View the **result table returned by the query**
+The demo enables users to:
+
+* Enter **natural language questions**
+* Automatically generate **SQL queries**
+* View the **generated SQL query**
+* Execute queries on a **SQLite database**
+* Display the **resulting table output**
+
+### 🖼️ Demo Screenshots
+
+For a better understanding of the system workflow, refer to the following screenshots:
+
+* `text2sql_project/project3/deployed1.png`
+* `text2sql_project/project3/deployed2.png`
+* `text2sql_project/project3/deployed3.png`
+## 📄 Project Reports
+
+### 🔹 Project Report 2
+
+A comprehensive report covering system design, training, and evaluation:
+
+🔗 https://tjhalanigrid.github.io/Text2SQL_Project/
+📂 Alternative: `docs/index.html`
+
+#### 📌 Highlights
+
+* System architecture overview
+* Training pipeline (**SFT + RLHF**)
+* Model comparison (T5, BART, CodeT5)
+* Execution accuracy evaluation (Spider benchmark)
+* Reinforcement learning insights
+* Training curves and visualizations
+* Demo screenshots
+
+---
+
+### 🔹 Project Report 3
+
+An advanced technical report focusing on optimization and deployment improvements:
+
+🔗 https://tjhalanigrid.github.io/text2sql_2/
+📂 Alternative: `project3/report.html`
+
+#### 🚀 Highlights
+
+* Parallel SQL execution (**~5.6× speedup**)
+* Execution error analysis with telemetry dashboard
+* Schema-aware constrained decoding
+* Hard vs Soft reward comparison in RL
+* Quantized inference benchmarking (**INT8, mixed precision**)
+* System-level performance optimization
+* End-to-end evaluation and insights
 
 ---
 
-##  Project Report 2
+### ⚠️ Important Note
 
-Full project report with architecture explanation, experiments, and evaluation results:
-
- https://tjhalanigrid.github.io/Text2SQL_Project/
-
-The report includes:
-
-- System architecture
-- Training pipeline (SFT + RLHF)
-- Model comparisons
-- Execution accuracy evaluation
-- Reinforcement learning analysis
-- Training curves and visualizations
-- Demo screenshots
-
----
-
-##  Project Report 3
-
-Full technical report covering optimization pipeline, reinforcement learning improvements, and deployment enhancements:
-
-👉 https://tjhalanigrid.github.io/text2sql_2/
-
-The report includes:
-
-- Parallel SQL execution optimization (5.6× speedup)
-- Execution error analysis and telemetry dashboard
-- Schema-aware constrained decoding
-- Hard vs soft reward comparison
-- Quantized inference benchmarking (INT8, mixed precision)
-- System-level performance improvements and analysis
-- End-to-end evaluation and insights
-
----
+* Performance results may vary depending on dataset splits, model configurations, and hardware setup
+* Reported improvements are based on controlled experiments under selected best-performing conditions
 
 
 ##  Features
@@ -173,7 +188,7 @@ Text2SQL_Project
 
 - `requirment.txt`  
   Python dependency list used for environment setup.
-----
+
 ----
 
 ## ⚙️ Setup Instructions
@@ -254,7 +269,7 @@ python -m scripts.quantize_export --base_model "Salesforce/codet5-base" --out_di
 python -m scripts.quantize_export --base_model "Salesforce/codet5-base" --out_dir checkpoints/task5/int8_dynamic --mode int8_dynamic --device cpu
 python -m scripts.quantize_export --base_model "Salesforce/codet5-base" --out_dir checkpoints/task5/int8_decoder_dynamic --mode int8_decoder_dynamic --device cpu
 ```
-----
+
 ----
 
 
@@ -286,48 +301,69 @@ python -m scripts.quantize_export --base_model "Salesforce/codet5-base" --out_di
 ---
 
 ##  Core Tasks
-## 📌 Project Tasks Breakdown
 
+## 📌 Project Tasks Breakdown
 ---
+## 📌 Project Tasks Overview
 
 ### 🔹 Task 1: Data Preparation
 
-- Prepare Spider JSON and SQLite artifacts needed for training and evaluation  
-- Validate schema/database paths and ensure required DBs exist locally  
-- Build clean prompt-ready examples for SFT and RLHF pipelines  
+* Prepared Spider dataset (JSON + SQLite) for training and evaluation
+* Validated schema paths and ensured all required databases are accessible
+* Built clean, prompt-ready examples for both **SFT** and **RLHF** pipelines
+
+📊 Plot: `result/task1_plot.png`
+
+> *Note: Results are based on random data splits and best-performing epoch/model selection.*
 
 ---
 
-### 🔹 Task 2: Train and Run Text-to-SQL Inference
+### 🔹 Task 2: Training & Inference
 
-- Fine-tune SFT and RLHF models  
-- Generate SQL from natural language questions  
-- Execute SQL safely and return result tables  
+* Fine-tuned models using **Supervised Fine-Tuning (SFT)** and **RLHF**
+* Generated SQL queries from natural language inputs
+* Executed SQL queries safely on SQLite databases
+* Returned structured result tables
 
----
+📊 Plot: `project3/task2.png`
 
-### 🔹 Task 3: Run Controlled Model Comparisons
-
-- Compare SFT vs RLHF checkpoints  
-- Compare model families (T5, BART, CodeT5)  
-- Use consistent evaluation pipelines  
+> *Note: Performance may vary depending on dataset splits, examples, and model configurations.*
 
 ---
 
-### 🔹 Task 4: Evaluate Quality with Benchmark Metrics
+### 🔹 Task 3: Controlled Model Comparison
 
-- Measure execution accuracy and exact match (Spider evaluation)  
-- Track per-model performance  
-- Generate aggregate comparison artifacts  
+* Compared **SFT vs RLHF** checkpoints
+* Evaluated different model families: **T5, BART, CodeT5**
+* Ensured consistent evaluation pipelines for fair comparison
+
+📊 Plot: `project3/task3.png`
+
+> *Note: Results depend on random splits, selected best model, and LoRA adaptation. Performance may vary significantly without these conditions.*
+
+---
+
+### 🔹 Task 4: Evaluation with Benchmark Metrics
+
+* Evaluated models using **Spider benchmark metrics**
+* Measured:
+
+  * Execution Accuracy
+  * Exact Match Accuracy
+* Generated aggregated performance comparisons
+
+📊 Plot: `project3/task4.png`
+
+> *Note: Results are influenced by random splits, best model selection, and LoRA tuning.*
 
 ---
 
 ### 🔹 Task 5: Presentation Layer
 
-- Launch interactive Gradio demo  
-- Regenerate plots and documentation visuals  
-
----
+* Developed an interactive **Gradio-based UI**
+* Enabled real-time Text-to-SQL generation and execution
+* Integrated plots and visual outputs for better interpretability
+--- 
 
 ## 🚀 Advanced Optimization Tasks (Project 3)
 
