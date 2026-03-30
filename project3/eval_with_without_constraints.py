@@ -5,6 +5,7 @@ import time
 import re
 import os
 import gc
+import sys
 from pathlib import Path
 
 import torch
@@ -18,7 +19,6 @@ try:
     from prompting import encode_prompt
     from src.sql_validator import validate_sql_schema
 except ImportError:
-    import sys
     sys.path.append(str(Path(__file__).resolve().parents[1]))
     from src.prompting import encode_prompt
     from src.sql_validator import validate_sql_schema
@@ -154,13 +154,31 @@ def check_execution(pred_sql, gold_sql, db_path, question, eval_type="unknown"):
 
 
 # =========================================================
-# EVALUATION RUNNER
+# EVALUATION RUNNER WITH SANITY CHECK
 # =========================================================
 def evaluate_model(adapter_path, mode, dev_data, db_root, tokenizer, device):
     print(f"\n⚙️ Loading [{mode.upper()}] model from: {adapter_path}")
     
+    # 🔥 THE FIX: Strict Path & File Checking
+    adapter_dir = Path(adapter_path).resolve()
+    config_file = adapter_dir / "adapter_config.json"
+    
+    if not adapter_dir.exists() or not config_file.exists():
+        print("\n" + "!"*60)
+        print(f"❌ ERROR: Could not find the LoRA adapter at:\n   {adapter_dir}")
+        print("!"*60)
+        print("WHY THIS HAPPENED:")
+        print("1. You haven't downloaded the 'checkpoints' folder from Google Drive.")
+        print("2. The folder is in the wrong location (it should be in the project root).")
+        print("\nPLEASE FIX:")
+        print("Go to the README, download the checkpoints via the Drive link,")
+        print("and make sure 'adapter_config.json' is inside that folder.")
+        print("!"*60 + "\n")
+        sys.exit(1) # Stop the script so it doesn't evaluate the wrong model!
+
     base_model = AutoModelForSeq2SeqLM.from_pretrained("Salesforce/codet5-base").to(device)
-    model = PeftModel.from_pretrained(base_model, adapter_path).to(device)
+    # Using str(adapter_dir) prevents relative path issues
+    model = PeftModel.from_pretrained(base_model, str(adapter_dir)).to(device)
     model = model.merge_and_unload()
     model.eval()
 
