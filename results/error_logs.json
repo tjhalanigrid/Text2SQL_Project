@@ -1167,5 +1167,677 @@
     "error": "schema_invalid",
     "error_type": "other",
     "timestamp": 1774419538.5559838
+  },
+  {
+    "question": "What are all the song names by singers who are older than average?",
+    "sql": "select song_name from singer where age  <  (select avg from singer)",
+    "error": "no such column: avg",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853009.8240352
+  },
+  {
+    "question": "What is the average and maximum capacities for all stadiums ?",
+    "sql": "select avg,  max(capacity) from stadium",
+    "error": "no such column: avg",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853014.047742
+  },
+  {
+    "question": "What is the name and capacity for the stadium with highest average attendance?",
+    "sql": "select name,  capacity from stadium order by avg desc limit 1",
+    "error": "no such column: avg",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853015.052313
+  },
+  {
+    "question": "What is the name and capacity for the stadium with the highest average attendance?",
+    "sql": "select name,  capacity from stadium order by avg desc limit 1",
+    "error": "no such column: avg",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853016.2028139
+  },
+  {
+    "question": "Show names for all stadiums except for stadiums having a concert in year 2014.",
+    "sql": "SELECT * FROM stadium except SELECT * FROM concert join stadium on concert.stadium_id  =  stadium.stadium_id where concert.year  =  2014",
+    "error": "SELECTs to the left and right of EXCEPT do not have the same number of result columns",
+    "error_type": "other",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853024.864213
+  },
+  {
+    "question": "List singer names and number of concerts for each singer.",
+    "sql": "SELECT * FROM concert_singer join singer on concert.concert_id  =  singer.singer_id group by concert.singer_id",
+    "error": "no such table: concert_singer",
+    "error_type": "wrong_table",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853028.793555
+  },
+  {
+    "question": "List all singer names in concerts in year 2014.",
+    "sql": "select name from singer_in_concert where year  =  2014",
+    "error": "no such column: name",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853030.1586208
+  },
+  {
+    "question": "what is the name and nation of the singer who have a song having 'Hey' in its name?",
+    "sql": "select name,  nation from singer where song_name  =  'hey'",
+    "error": "no such column: nation",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853032.8438022
+  },
+  {
+    "question": "Find the number of dog pets that are raised by female students (with sex F).",
+    "sql": "select count(*) from pets where pettype  =  'dog' and sex  =  'f'",
+    "error": "no such column: sex",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853043.0156732
+  },
+  {
+    "question": "Find the first name of students who have cat or dog pet.",
+    "sql": "SELECT * FROM has_student join pets on has_student.petid  =  pets.petid where pets.pettype  =  \"cat\" or pets.pettype  =  \"dog\"",
+    "error": "no such table: has_student",
+    "error_type": "wrong_table",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853044.963205
+  },
+  {
+    "question": "What are the first names of every student who has a cat or dog as a pet?",
+    "sql": "SELECT * FROM student join has_pet on student.stuid  =  has_pet.stuid where has_pet.pettype  =  \"cat\" or has_pet.pettype  =  \"dog\"",
+    "error": "no such column: has_pet.pettype",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853046.035937
+  },
+  {
+    "question": "Find the first name of students who have both cat and dog pets .",
+    "sql": "SELECT * FROM student join has_pet on student.stuid  =  has_pet.stuid where has_pet.pettype  =  \"cat\" intersect SELECT * FROM student join pets on has_pet.petid  =  pets.petid where pets.pettype  =  \"dog\"",
+    "error": "no such column: has_pet.petid",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853047.624244
+  },
+  {
+    "question": "What are the students' first names who have both cats and dogs as pets?",
+    "sql": "SELECT * FROM student join has_pet on student.stuid  =  has_pet.stuid where has_pet.petid  =  'cats' intersect SELECT * FROM student join pets on has_pet.petid  =  pets.petid",
+    "error": "no such column: has_pet.petid",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853049.4322062
+  },
+  {
+    "question": "Find the major and age of students who do not have a cat pet.",
+    "sql": "select major,  age from student where stuid not in (select stuid from has_pet where pettype  =  'cat' )",
+    "error": "no such column: pettype",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853050.084243
+  },
+  {
+    "question": "What major is every student who does not own a cat as a pet, and also how old are they?",
+    "sql": "select major from student where stuid not in (select stuid from has_pet where pettype  =  'cat' )",
+    "error": "no such column: pettype",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853050.789737
+  },
+  {
+    "question": "Find the id of students who do not have a cat pet.",
+    "sql": "select stuid from student where stuid not in (select stuid from has_pet where pettype  =  'cat' )",
+    "error": "no such column: pettype",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853051.415549
+  },
+  {
+    "question": "Find the first name and gender of student who have more than one pet.",
+    "sql": "SELECT * FROM student join has_penet on student.stuid  =  has_penet.stuid group by has_penet.stuid having count(*)  >  1",
+    "error": "no such table: has_penet",
+    "error_type": "wrong_table",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853064.2096498
+  },
+  {
+    "question": "What is the first name and gender of the all the students who have more than one pet?",
+    "sql": "SELECT * FROM student join has_penet on student.stuid  =  has_penet.stuid group by has_penet.stuid having count(*)  >  1",
+    "error": "no such table: has_penet",
+    "error_type": "wrong_table",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853065.1535869
+  },
+  {
+    "question": "What is the last name of the student who has a cat that is 3 years old?",
+    "sql": "SELECT * FROM student join has_pet on student.stuid  =  has_pet.stuid where has_pet.pet_age  =  3",
+    "error": "no such column: has_pet.pet_age",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853066.706959
+  },
+  {
+    "question": "How many countries does each continent have? List the continent id, continent name and the number of countries.",
+    "sql": "SELECT * FROM countries join continents on countries.contid  =  continents.contid group by countries.countryname",
+    "error": "no such column: countries.contid",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853069.647831
+  },
+  {
+    "question": "Which model of the car has the minimum horsepower?",
+    "sql": "select model from model_list order by horsepower desc limit 1",
+    "error": "no such column: horsepower",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853073.2430878
+  },
+  {
+    "question": "What is the model of the car with the smallest amount of horsepower?",
+    "sql": "select model from model_list order by horsepower desc limit 1",
+    "error": "no such column: horsepower",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853073.567598
+  },
+  {
+    "question": "Find the model of the car whose weight is below the average weight.",
+    "sql": "select model from model_list where weight  >  (select avg(weight) from car_names)",
+    "error": "no such column: weight",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853074.076323
+  },
+  {
+    "question": "What is the model for the car with a weight smaller than the average?",
+    "sql": "select model from model_list where weight  <  (select avg(weight) from car_names)",
+    "error": "no such column: weight",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853074.5727081
+  },
+  {
+    "question": "What is the name of the different car makers who produced a car in 1970?",
+    "sql": "select distinct fname from car_makers where maker  =  '1970'",
+    "error": "no such column: fname",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853075.878475
+  },
+  {
+    "question": "Which distinct car models are the produced after 1980?",
+    "sql": "select distinct model from model_list where year  >  1980",
+    "error": "no such column: year",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853078.4610822
+  },
+  {
+    "question": "What are the different models for the cards produced after 1980?",
+    "sql": "select distinct model from model_list where year  >  1980",
+    "error": "no such column: year",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853078.836143
+  },
+  {
+    "question": "Which of the countries has the most car makers? List the country name.",
+    "sql": "select countryname from country group by countryname order by count(*) desc limit 1",
+    "error": "no such table: country",
+    "error_type": "wrong_table",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853080.9967842
+  },
+  {
+    "question": "What is the name of the country with the most car makers?",
+    "sql": "select countryname from country_makers group by country order by count(*) desc limit 1",
+    "error": "no such table: country_makers",
+    "error_type": "wrong_table",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853081.4283578
+  },
+  {
+    "question": "What is the accelerate of the car make amc hornet sportabout (sw)?",
+    "sql": "select accelerate from car_data where mpg  =  \"amc\" and horsepower  =  \"sw\"",
+    "error": "no such table: car_data",
+    "error_type": "wrong_table",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853084.040315
+  },
+  {
+    "question": "How much does the car accelerate that makes amc hornet sportabout (sw)?",
+    "sql": "select accelerate from car_data where horsepower  =  \"sw\"",
+    "error": "no such table: car_data",
+    "error_type": "wrong_table",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853084.42901
+  },
+  {
+    "question": "What is the average miles per gallon of all the cards with 4 cylinders?",
+    "sql": "select avg(mg) from car_makers where cylinders  =  4",
+    "error": "no such column: mg",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853086.9219048
+  },
+  {
+    "question": "What is the smallest weight of the car produced with 8 cylinders on 1974 ?",
+    "sql": "select min(weight) from car_data where cylinders  =  8",
+    "error": "no such table: car_data",
+    "error_type": "wrong_table",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853087.3955278
+  },
+  {
+    "question": "What is the minimum weight of the car with 8 cylinders produced in 1974 ?",
+    "sql": "select min(weight) from car_data where cylinders  =  8",
+    "error": "no such table: car_data",
+    "error_type": "wrong_table",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853088.013767
+  },
+  {
+    "question": "What are all the makers and models?",
+    "sql": "select makers,  model from model_list",
+    "error": "no such column: makers",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853088.3920798
+  },
+  {
+    "question": "What are the makers and models?",
+    "sql": "select makers,  model from model_list",
+    "error": "no such column: makers",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853088.645053
+  },
+  {
+    "question": "What is the average weight and year for each year?",
+    "sql": "select avg(weight),  year from car_data group by year",
+    "error": "no such table: car_data",
+    "error_type": "wrong_table",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853091.1033359
+  },
+  {
+    "question": "Which countries in europe have at least 3 car manufacturers?",
+    "sql": "select countryname from country where countryname  =  'europe' group by countryname having count(*)  >=  3",
+    "error": "no such table: country",
+    "error_type": "wrong_table",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853091.657611
+  },
+  {
+    "question": "What is the maximum horsepower and the make of the car models with 3 cylinders?",
+    "sql": "select max(horsepower),  max(make) from model_list group by maker",
+    "error": "no such column: horsepower",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853092.7869399
+  },
+  {
+    "question": "What is the largest amount of horsepower for the models with 3 cylinders and what make is it?",
+    "sql": "select max(horsepower),  maker from model_list group by maker order by count(*) desc limit 3",
+    "error": "no such column: horsepower",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853093.3369548
+  },
+  {
+    "question": "What is the car model with the highest mpg ?",
+    "sql": "select model from model_list order by mpg desc limit 1",
+    "error": "no such column: mpg",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853094.0759811
+  },
+  {
+    "question": "What is the average edispl of the cars of model volvo?",
+    "sql": "select avg(eddispl) from cars_data where model  =  'volvo'",
+    "error": "no such column: eddispl",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853095.378009
+  },
+  {
+    "question": "What is the average edispl for all volvos?",
+    "sql": "select avg(eddispl) from ars_data",
+    "error": "no such table: ars_data",
+    "error_type": "wrong_table",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853095.6669078
+  },
+  {
+    "question": "What is the maximum accelerate for all the different cylinders?",
+    "sql": "select max(accelerate) from car_data",
+    "error": "no such table: car_data",
+    "error_type": "wrong_table",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853096.488092
+  },
+  {
+    "question": "What are the names and ids of all makers with more than 3 models?",
+    "sql": "select name,  id from model_list group by id having count(*)  >  3",
+    "error": "no such column: name",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853102.886422
+  },
+  {
+    "question": "Which distinctive models are produced by maker with the full name General Motors or weighing more than 3500?",
+    "sql": "select distinct model from model_list where maker  =  'general motors' or weight  >  3500",
+    "error": "no such column: weight",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853103.5320268
+  },
+  {
+    "question": "What are the different models created by either the car maker General Motors or weighed more than 3500?",
+    "sql": "select distinct model from model_list where maker  =  'general motors' or weight  >  3500",
+    "error": "no such column: weight",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853104.329696
+  },
+  {
+    "question": "What is the horsepower of the car with the largest accelerate?",
+    "sql": "select horsepower from car_data order by accelerate desc limit 1",
+    "error": "no such table: car_data",
+    "error_type": "wrong_table",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853106.062837
+  },
+  {
+    "question": "What is the horsepower of the car with the greatest accelerate?",
+    "sql": "select horsepower from car_data order by accelerate desc limit 1",
+    "error": "no such table: car_data",
+    "error_type": "wrong_table",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853106.494834
+  },
+  {
+    "question": "For model volvo, how many cylinders does the car with the least accelerate have?",
+    "sql": "select cylinders from car_data order by accelerate desc limit 1",
+    "error": "no such table: car_data",
+    "error_type": "wrong_table",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853106.8601978
+  },
+  {
+    "question": "What is the number of carsw ith over 6 cylinders?",
+    "sql": "select count(*) from car_data where cylinders  >  6",
+    "error": "no such table: car_data",
+    "error_type": "wrong_table",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853110.256385
+  },
+  {
+    "question": "Among the cars with more than lowest horsepower, which ones do not have more than 3 cylinders? List the car makeid and make name.",
+    "sql": "SELECT * FROM car_names join cars_data on car_names.makeid  =  cars_data.makeid group by car_names.make order by count(*) desc limit 3",
+    "error": "no such column: cars_data.makeid",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853113.419658
+  },
+  {
+    "question": "Among the cars that do not have the minimum horsepower , what are the make ids and names of all those with less than 4 cylinders ?",
+    "sql": "SELECT * FROM car_names join cars_data on car_names.makeid  =  cars_data.makeid where cars_data.cylinders  <  4",
+    "error": "no such column: cars_data.makeid",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853114.6028538
+  },
+  {
+    "question": "What is the maximum miles per gallon of the car with 8 cylinders or produced before 1980 ?",
+    "sql": "select max(mg) from car_makers where cylinders  =  8",
+    "error": "no such column: mg",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853115.0806441
+  },
+  {
+    "question": "What are the id and names of the countries which have more than 3 car makers or produce the 'fiat' model?",
+    "sql": "SELECT * FROM car_makers join country on car_makers.id  =  countries.countryid group by model_list.modelid having count(*)  >  3",
+    "error": "no such table: country",
+    "error_type": "wrong_table",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853122.3604228
+  },
+  {
+    "question": "What are the ids and names of all countries that either have more than 3 car makers or produce fiat model ?",
+    "sql": "select countryid,  countryname from country_makers group by countryname having count(*)  >  3",
+    "error": "no such table: country_makers",
+    "error_type": "wrong_table",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853123.6592371
+  },
+  {
+    "question": "Which abbreviation corresponds to Jetblue Airways?",
+    "sql": "SELECT * FROM airlines join airports on airlines.uid  =  airports.country where airports.countryname  =  \"jetblue airways\"",
+    "error": "no such column: airports.countryname",
+    "error_type": "wrong_column",
+    "eval_type": "unconstrained",
+    "timestamp": 1774853126.462147
+  },
+  {
+    "question": "Find the first name of students who have cat or dog pet.",
+    "sql": "SELECT * FROM has_pet join pets on has_pet.petid  =  pets.petid join student on has_pet.stuid  =  student.stuid where has_pet.pettype  =  \"cat\" or has_pet.pettype  =  \"dog\"",
+    "error": "no such column: has_pet.pettype",
+    "error_type": "wrong_column",
+    "eval_type": "constrained",
+    "timestamp": 1774853202.1712441
+  },
+  {
+    "question": "What are the first names of every student who has a cat or dog as a pet?",
+    "sql": "SELECT * FROM has_pet join student on has_pet.stuid  =  student.stuid where has_pet.pettype  =  \"cat\" or has_pet.pettype  =  \"dog\"",
+    "error": "no such column: has_pet.pettype",
+    "error_type": "wrong_column",
+    "eval_type": "constrained",
+    "timestamp": 1774853203.632003
+  },
+  {
+    "question": "Find the first name of students who have both cat and dog pets .",
+    "sql": "SELECT * FROM has_pet join pets on has_pet.petid  =  pets.petid join student on has_pet.stuid  =  student.stuid where has_pet.pettype  =  \"cat\" intersect SELECT * FROM has_pet join pets on has_pet.petid  =  pets.petid where has_pet.pettype  =  \"dog\"",
+    "error": "no such column: has_pet.pettype",
+    "error_type": "wrong_column",
+    "eval_type": "constrained",
+    "timestamp": 1774853205.84058
+  },
+  {
+    "question": "What are the students' first names who have both cats and dogs as pets?",
+    "sql": "SELECT * FROM has_pet join pets on has_pet.petid  =  pets.petid join student on has_pet.stuid  =  student.stuid where has_pet.pettype  =  'cats' intersect SELECT * FROM has_pet join pets on has_pet.petid  =  pets.petid where has_pet.pettype  =  'dogs'",
+    "error": "no such column: has_pet.pettype",
+    "error_type": "wrong_column",
+    "eval_type": "constrained",
+    "timestamp": 1774853208.071348
+  },
+  {
+    "question": "What major is every student who does not own a cat as a pet, and also how old are they?",
+    "sql": "select major from student where stuid not in (select stuid from has_pet where pettype  =  \"cat as a pet\")",
+    "error": "no such column: pettype",
+    "error_type": "wrong_column",
+    "eval_type": "constrained",
+    "timestamp": 1774853209.602043
+  },
+  {
+    "question": "Find the id of students who do not have a cat pet.",
+    "sql": "select stuid from student where stuid not in (select stuid from has_pet where pettype  =  'cat')",
+    "error": "no such column: pettype",
+    "error_type": "wrong_column",
+    "eval_type": "constrained",
+    "timestamp": 1774853210.298213
+  },
+  {
+    "question": "Find the last name of the student who has a cat that is age 3.",
+    "sql": "SELECT * FROM student join has_penet on student.stuid  =  has_penet.stuid where has_penet.pet_age  =  3",
+    "error": "no such table: has_penet",
+    "error_type": "wrong_table",
+    "eval_type": "constrained",
+    "timestamp": 1774853228.30689
+  },
+  {
+    "question": "What is the last name of the student who has a cat that is 3 years old?",
+    "sql": "SELECT * FROM student join has_pet on student.stuid  =  has_pet.stuid where has_pet.pet_age  =  3",
+    "error": "no such column: has_pet.pet_age",
+    "error_type": "wrong_column",
+    "eval_type": "constrained",
+    "timestamp": 1774853229.427097
+  },
+  {
+    "question": "Which model of the car has the minimum horsepower?",
+    "sql": "select model from model_list order by horsepower desc limit 1",
+    "error": "no such column: horsepower",
+    "error_type": "wrong_column",
+    "eval_type": "constrained",
+    "timestamp": 1774853239.068087
+  },
+  {
+    "question": "What is the model of the car with the smallest amount of horsepower?",
+    "sql": "select model from model_list order by horsepower desc limit 1",
+    "error": "no such column: horsepower",
+    "error_type": "wrong_column",
+    "eval_type": "constrained",
+    "timestamp": 1774853239.862818
+  },
+  {
+    "question": "Find the model of the car whose weight is below the average weight.",
+    "sql": "select model from model_list where weight  >  (select avg(weight) from car_names)",
+    "error": "no such column: weight",
+    "error_type": "wrong_column",
+    "eval_type": "constrained",
+    "timestamp": 1774853240.39294
+  },
+  {
+    "question": "What is the model for the car with a weight smaller than the average?",
+    "sql": "select model from model_list where weight  <  (select avg(weight) from car_names)",
+    "error": "no such column: weight",
+    "error_type": "wrong_column",
+    "eval_type": "constrained",
+    "timestamp": 1774853240.927648
+  },
+  {
+    "question": "What is the name of the different car makers who produced a car in 1970?",
+    "sql": "SELECT * FROM car_makers join car_names on car_makers.id  =  car_names.make where car_names.year  =  1970",
+    "error": "no such column: car_names.year",
+    "error_type": "wrong_column",
+    "eval_type": "constrained",
+    "timestamp": 1774853243.675764
+  },
+  {
+    "question": "Which distinct car models are the produced after 1980?",
+    "sql": "select distinct model from model_list where year  >  1980",
+    "error": "no such column: year",
+    "error_type": "wrong_column",
+    "eval_type": "constrained",
+    "timestamp": 1774853247.57268
+  },
+  {
+    "question": "What is the name of the country with the most car makers?",
+    "sql": "select countryname from car_makers group by country order by count(*) desc limit 1",
+    "error": "no such column: countryname",
+    "error_type": "wrong_column",
+    "eval_type": "constrained",
+    "timestamp": 1774853251.014121
+  },
+  {
+    "question": "What is the smallest weight of the car produced with 8 cylinders on 1974 ?",
+    "sql": "select min(weight) from car_data where cylinders  =  8 and year  =  1974",
+    "error": "no such table: car_data",
+    "error_type": "wrong_table",
+    "eval_type": "constrained",
+    "timestamp": 1774853260.160287
+  },
+  {
+    "question": "What is the maximum horsepower and the make of the car models with 3 cylinders?",
+    "sql": "select max(horsepower),  max(maker) from model_list where cylinders  =  3",
+    "error": "no such column: horsepower",
+    "error_type": "wrong_column",
+    "eval_type": "constrained",
+    "timestamp": 1774853267.903005
+  },
+  {
+    "question": "What is the largest amount of horsepower for the models with 3 cylinders and what make is it?",
+    "sql": "select max(horsepower),  maker from model_list group by maker order by count(*) desc limit 3",
+    "error": "no such column: horsepower",
+    "error_type": "wrong_column",
+    "eval_type": "constrained",
+    "timestamp": 1774853268.7363641
+  },
+  {
+    "question": "What is the average edispl of the cars of model volvo?",
+    "sql": "select avg(eddispl) from cars_data where model  =  'volvo'",
+    "error": "no such column: eddispl",
+    "error_type": "wrong_column",
+    "eval_type": "constrained",
+    "timestamp": 1774853272.280076
+  },
+  {
+    "question": "What is the average edispl for all volvos?",
+    "sql": "select avg(eddispl) from car_data where maker  =  'volvos'",
+    "error": "no such table: car_data",
+    "error_type": "wrong_table",
+    "eval_type": "constrained",
+    "timestamp": 1774853272.8353322
+  },
+  {
+    "question": "Which distinctive models are produced by maker with the full name General Motors or weighing more than 3500?",
+    "sql": "SELECT * FROM model_list join car_makers on model_list.maker  =  car_makers.id join model_names on model_list.model  =  model_names.model where car_names.fullname  =  \"general motors\" or car_names.weight  >  3500",
+    "error": "no such table: model_names",
+    "error_type": "wrong_table",
+    "eval_type": "constrained",
+    "timestamp": 1774853285.920817
+  },
+  {
+    "question": "What are the different models created by either the car maker General Motors or weighed more than 3500?",
+    "sql": "select distinct model from model_list where maker  =  'general motors' or weight  >  3500",
+    "error": "no such column: weight",
+    "error_type": "wrong_column",
+    "eval_type": "constrained",
+    "timestamp": 1774853287.145186
+  },
+  {
+    "question": "Among the cars with more than lowest horsepower, which ones do not have more than 3 cylinders? List the car makeid and make name.",
+    "sql": "SELECT * FROM car_names join cars_data on car_names.makeid  =  cars_data.makeid group by car_names.make order by count(*) desc limit 3",
+    "error": "no such column: cars_data.makeid",
+    "error_type": "wrong_column",
+    "eval_type": "constrained",
+    "timestamp": 1774853300.337017
+  },
+  {
+    "question": "Among the cars that do not have the minimum horsepower , what are the make ids and names of all those with less than 4 cylinders ?",
+    "sql": "SELECT * FROM car_names join cars_data on car_names.make  =  cars_data.make where cars_data.cylinders  <  4",
+    "error": "no such column: cars_data.make",
+    "error_type": "wrong_column",
+    "eval_type": "constrained",
+    "timestamp": 1774853301.502739
+  },
+  {
+    "question": "What is the maximum miles per gallon of the car with 8 cylinders or produced before 1980 ?",
+    "sql": "select max(mg) from car_makers where cylinders  =  8 or year  <  1980",
+    "error": "no such column: mg",
+    "error_type": "wrong_column",
+    "eval_type": "constrained",
+    "timestamp": 1774853302.583149
+  },
+  {
+    "question": "What are the id and names of the countries which have more than 3 car makers or produce the 'fiat' model?",
+    "sql": "SELECT * FROM car_makers join country_names on car_makers.id  =  country_names.country where car_names.model  =  'fiat' group by country_names.country",
+    "error": "no such table: country_names",
+    "error_type": "wrong_table",
+    "eval_type": "constrained",
+    "timestamp": 1774853310.8395169
+  },
+  {
+    "question": "What are the ids and names of all countries that either have more than 3 car makers or produce fiat model ?",
+    "sql": "SELECT * FROM car_makers join country_names on car_makers.id  =  country_names.country where model_list.model  =  'fiat' group by country_names.country",
+    "error": "no such table: country_names",
+    "error_type": "wrong_table",
+    "eval_type": "constrained",
+    "timestamp": 1774853312.108864
   }
 ]

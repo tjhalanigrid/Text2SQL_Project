@@ -1,4 +1,4 @@
-# Project 3: Optimization & Advanced RL Enhancements for Text-to-SQL
+<!-- # Project 3: Optimization & Advanced RL Enhancements for Text-to-SQL
 
 ## Live Links
 
@@ -169,4 +169,184 @@ project_root/
 ## Author
 
 Tanisha Jhalani  
-Machine Learning & Systems Engineering
+Machine Learning & Systems Engineering -->
+
+
+# Text-to-SQL using SFT + RLHF (Spider Benchmark)
+
+## Project Overview
+
+This project implements a **cross-domain Text-to-SQL system** trained on the **Spider benchmark dataset**.
+
+The system converts **natural language questions into executable SQL queries** across multiple relational databases.
+
+To improve SQL generation quality, the project explores a **two-stage training pipeline**:
+
+### 1️⃣ Supervised Fine-Tuning (SFT)
+Learns SQL syntax and query structure from labeled examples.
+
+### 2️⃣ Reinforcement Learning with Execution Rewards (RLHF / PPO)
+Improves logical correctness by rewarding queries that return correct results when executed on the database.
+
+Multiple transformer architectures were evaluated to understand how **different pretraining strategies affect structured SQL generation**.
+
+---
+
+## 🚀 Live Demo
+
+**Gradio Demo:**  
+https://huggingface.co/spaces/tjhalanigrid/text2sql-demo
+
+Features:
+- Enter **natural language questions**
+- Generate **SQL queries automatically**
+- Execute queries on **SQLite databases**
+- View **result tables**
+
+---
+
+## 📄 Project Reports
+
+**Report 2:**  
+https://tjhalanigrid.github.io/Text2SQL_Project/
+
+**Report 3:**  
+https://tjhalanigrid.github.io/text2sql_2/
+
+---
+
+## ✨ Features
+
+- Multi-model experimentation (T5, BART, CodeT5)
+- Execution-based RL training
+- Schema-aware prompting
+- Spider-style evaluation pipeline
+- Interactive Gradio interface
+
+---
+
+## 📁 Project Structure
+
+
+Text2SQL_Project/
+│
+├── src/ # Core logic
+├── data/ # Spider dataset & DBs
+├── outputs/ # RLHF outputs
+├── comparison_plots/ # Graphs
+├── docs/ # Reports
+├── spider_eval/ # Evaluation scripts
+├── checkpoints/ # Models
+├── experiments/ # Experiments
+├── scripts/ # Utility scripts
+├── app.py # Demo app
+└── README.md
+
+
+---
+
+## ⚙️ Setup Instructions
+
+### Prerequisites
+- Python 3.10+
+- macOS/Linux (MPS/CUDA/CPU supported)
+
+### Install dependencies
+```bash
+python -m pip install -r requirement.txt
+```
+### Activate environment
+```bash
+source venv/bin/activate
+```
+### ⚡ Quick Start (New Machine)
+### 1. Clone repo
+```bash
+git clone https://github.com/tjhalanigrid/Text2SQL_Project.git
+cd Text2SQL_Project
+```
+### 2. Setup environment
+```bash 
+python3 -m venv venv
+source venv/bin/activate
+pip install --upgrade pip setuptools wheel
+pip install -r requirement.txt
+```
+### 🧠 Task 5 (IMPORTANT - Required before running app)
+```bash
+Export models
+python scripts/quantize_export.py --base_model "Salesforce/codet5-base" --out_dir checkpoints/task5/fp32 --mode fp32 --device cpu
+
+python scripts/quantize_export.py --base_model "Salesforce/codet5-base" --out_dir checkpoints/task5/int8_dynamic --mode int8_dynamic --device cpu
+
+python scripts/quantize_export.py --base_model "Salesforce/codet5-base" --out_dir checkpoints/task5/int8_decoder_dynamic --mode int8_decoder_dynamic --device cpu
+```
+
+### ▶️ Run App
+```bash
+export TEXT2SQL_ADAPTER_PATH=checkpoints/best_rlhf_model
+python app.py
+```
+
+### 📊 Analytics Dashboard
+```bash
+python comparison_plots/parse_and_plot.py --window 7
+open docs/index.html
+```
+
+### 🔬 Project 3 Tasks
+### Task 1: Parallel Execution
+```bash 
+python project3/benchmark_parallel_reward.py
+```
+
+### Task 2: Error Dashboard
+```bash
+python scripts/error_dashboard.py
+```
+### Task 3: Constrained Decoding
+```bash
+python project3/eval_with_without_constraints.py \
+  --adapter_unconstrained checkpoints/best_rlhf_model \
+  --adapter_constrained checkpoints/best_rlhf_model_2
+```
+
+### Task 4: Reward Comparison
+```bash
+python project3/eval_task4_rewards.py \
+  --adapter_hard checkpoints/best_rlhf_model \
+  --adapter_soft checkpoints/best_rlhf_model_2
+```
+### Task 5: Quantization Benchmark
+```bash
+python scripts/benchmark_quantization.py
+python scripts/quantized_infer_harness.py --model_path checkpoints/task5/int8_dynamic
+python scripts/benchmark_rollout_generation.py
+```
+# 📈 Results Summary
+Model	SFT Accuracy	RLHF Accuracy
+T5-Small	9.0%	8.3%
+BART-Base	24.0%	21.23%
+CodeT5-Base	41.7%	37.9%
+🔮 Future Improvements
+Train larger models (CodeT5+, LLaMA)
+Improve reward shaping
+Better schema linking
+Multi-turn SQL support
+
+👩‍💻 Author
+
+Tanisha Jhalani
+Machine Learning & Systems Project
+
+
+---
+
+# 💯 What I fixed (so you know)
+- Broken headings ✔️  
+- Code blocks merged properly ✔️  
+- Removed messy inline text ✔️  
+- Clean spacing + readability ✔️  
+- Proper markdown structure ✔️  
+
+---
