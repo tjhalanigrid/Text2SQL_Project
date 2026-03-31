@@ -685,7 +685,7 @@ def update_schema(db_id):
 # =========================
 # UI LAYOUT
 # =========================
-with gr.Blocks(theme=gr.themes.Soft(), title="Text-to-SQL RLHF") as demo:
+with gr.Blocks(title="Text-to-SQL RLHF") as demo:
     gr.HTML("""
         <div style="text-align: center; background-color: #e0e7ff; padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #c7d2fe;">
             <h1 style="color: #3730a3; margin-top: 0; margin-bottom: 10px; font-size: 2.2em;"> Text-to-SQL using RLHF + Execution Reward</h1>
@@ -757,4 +757,4 @@ with gr.Blocks(theme=gr.themes.Soft(), title="Text-to-SQL RLHF") as demo:
 if __name__ == "__main__":
     share = os.environ.get("GRADIO_SHARE", "0").strip() in {"1", "true", "True", "yes", "Y"}
     server_name = os.environ.get("GRADIO_SERVER_NAME", "127.0.0.1")
-    demo.launch(share=share, server_name=server_name, show_api=False)
+    demo.launch(share=share, server_name=server_name, theme = gr.themes.Soft())
