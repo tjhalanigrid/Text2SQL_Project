@@ -346,7 +346,7 @@ def load_model(adapter_path, device):
     model = model.to(device)
     model.eval()
 
-    print("✅ LoRA adapter loaded and merged successfully.")
+    
     return model
 
 # =========================================================
